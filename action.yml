@@ -1,4 +1,4 @@
-name: 'Ansible Playbook'
+name: 'Play Ansible Playbook'
 description: 'Github Action for running Ansible Playbooks.'
 inputs:
   galaxy_file:

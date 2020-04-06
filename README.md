@@ -1,4 +1,4 @@
-# Action: Ansible Playbook
+# Action: Play Ansible Playbook
 
 Github Action for running Ansible Playbooks.
 
@@ -144,7 +144,7 @@ required: false
 ## Example Usage
 
 ```yaml
-- name: Ansible Playbook
+- name: Play Ansible Playbook
   uses: arillso/action.playbook@master
   with:
     playbook: tests/playbook.yml
