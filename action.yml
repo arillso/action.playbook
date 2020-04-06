@@ -1,0 +1,105 @@
+name: 'Ansible Playbook'
+description: 'Github Action for running Ansible Playbooks.'
+inputs:
+  galaxy_file:
+    description: 'Name of the galaxy file in your workspace.'
+    required: false
+  inventory:
+    description: 'Name of the inventory file in your workspace.'
+    required: true
+  playbook:
+    description: 'Name of the playbook in your workspace.'
+    required: true
+  limit:
+    description: 'Further limit selected hosts to an additional pattern.'
+    required: false
+  skip_tags:
+    description: 'Only run plays and tasks whose tags do not match these values.'
+    required: false
+  start_at_task:
+    description: 'Start the playbook at the task matching this name.'
+    required: false
+  tags:
+    description: 'Only run plays and tasks tagged with these values.'
+    required: false
+  extra_vars:
+    description: 'Set additional variables as key=value.'
+    required: false
+  module_path:
+    description: 'Prepend paths to module library.'
+    required: false
+  check:
+    description: 'Run a check, do not apply any changes.'
+    required: false
+  diff:
+    description: 'When changing (small) files and templates, show the differences in those files; works great with –check.'
+    required: false
+  flush_cache:
+    description: 'Clear the fact cache for every host in inventory.'
+    required: false
+  force_handlers:
+    description: 'Run handlers even if a task fails.'
+    required: false
+  list_hosts:
+    description: 'Outputs a list of matching hosts.'
+    required: false
+  list_tags:
+    description: 'List all available tags.'
+    required: false
+  list_tasks:
+    description: 'List all tasks that would be executed.'
+    required: false
+  syntax_check:
+    description: 'Perform a syntax check on the playbook.'
+    required: false
+  forks:
+    description: 'Specify number of parallel processes to use.'
+    required: false
+  vault_id:
+    description: 'The vault identity to use.'
+    required: false
+  vault_password:
+    description: 'The vault password to use.'
+    required: false
+  verbose:
+    description: 'Level of verbosity, 0 up to 4.'
+    required: false
+  private_key:
+    description: 'Use this key to authenticate the connection.'
+    required: false
+  user:
+    description: 'Connect as this user.'
+    required: false
+  connection:
+    description: 'Connection type to use.'
+    required: false
+  timeout:
+    description: 'Override the connection timeout in seconds.'
+    required: false
+  ssh_common_args:
+    description: 'Specify common arguments to pass to sftp/scp/ssh.'
+    required: false
+  sftp_extra_args:
+    description: 'Specify extra arguments to pass to sftp only.'
+    required: false
+  scp_extra_args:
+    description: 'Specify extra arguments to pass to scp only.'
+    required: false
+  ssh-extra-args:
+    description: 'Specify extra arguments to pass to ssh only.'
+    required: false
+  become:
+    description: 'Run operations with become.'
+    required: false
+  become_method:
+    description: 'Privilege escalation method to use.'
+    required: false
+  become_user:
+    description: 'Run operations as this user.'
+    required: false
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+branding:
+  icon: 'play-circle'
+  color: 'black'
