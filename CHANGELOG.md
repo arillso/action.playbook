@@ -5,8 +5,11 @@ and [human-readable changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## master
 
+## 0.0.4
+
 ### Changed
 
+- Bump arillso/ansible from 2.10.3 to 2.12.0
 - Bump github.com/joho/godotenv from 1.3.0 to 1.4.0
 - Bump github.com/urfave/cli/v2 from 2.2.0 to 2.3.0
 
