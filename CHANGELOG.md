@@ -7,6 +7,7 @@ and [human-readable changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Bump github.com/joho/godotenv from 1.3.0 to 1.4.0
 - Bump github.com/urfave/cli/v2 from 2.2.0 to 2.3.0
 
 ## 0.0.3
