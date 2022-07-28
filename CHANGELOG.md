@@ -5,9 +5,12 @@ and [human-readable changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## master
 
+## 0.0.5
+
 ### Changed
 
 - Bump arillso/ansible from 2.12.0 to 2.12.4
+- Bump github.com/urfave/cli/v2 from 2.3.0 to 2.11.1
 
 ## 0.0.4
 
