@@ -15,9 +15,9 @@ COPY . .
 RUN go mod download
 
 # Build the application
-RUN go build -o main 
+RUN go build -o main
 
-FROM arillso/ansible:2.12.0 as production
+FROM arillso/ansible:2.12.4 as production
 
 # Copy binary from build to main folder
 COPY --from=builder /build/main /usr/local/bin
