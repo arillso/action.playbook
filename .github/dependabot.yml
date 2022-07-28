@@ -1,18 +1,29 @@
 version: 2
 updates:
-- package-ecosystem: gomod
-  directory: "/"
-  schedule:
-    interval: daily
-    time: "04:00"
-  open-pull-requests-limit: 10
-  reviewers:
-  - sbaerlocher
-- package-ecosystem: docker
-  directory: "/"
-  schedule:
-    interval: daily
-    time: "04:00"
-  open-pull-requests-limit: 10
-  reviewers:
-  - sbaerlocher
+  - package-ecosystem: gomod
+      directory: '/'
+      schedule:
+        interval: monthly
+      open-pull-requests-limit: 10
+      reviewers:
+        - sbaerlocher
+      assignees:
+        - sbaerlocher
+      commit-message:
+        prefix: fix
+        prefix-development: chore
+        include: scope
+
+  - package-ecosystem: docker
+      directory: '/'
+      schedule:
+        interval: monthly
+      open-pull-requests-limit: 10
+      reviewers:
+        - sbaerlocher
+      assignees:
+        - sbaerlocher
+      commit-message:
+        prefix: fix
+        prefix-development: chore
+        include: scope

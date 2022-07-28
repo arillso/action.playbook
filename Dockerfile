@@ -15,7 +15,7 @@ COPY . .
 RUN go mod download
 
 # Build the application
-RUN go build -o main 
+RUN go build -o main
 
 FROM arillso/ansible:2.12.4 as production
 
