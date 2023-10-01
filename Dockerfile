@@ -17,7 +17,7 @@ RUN go mod download
 # Build the application
 RUN go build -o main
 
-FROM cytopia/ansible:latest-azure as production
+FROM cytopia/ansible:latest as production
 
 RUN pip3 install boto3 botocore
 
