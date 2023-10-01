@@ -17,7 +17,7 @@ RUN go mod download
 # Build the application
 RUN go build -o main
 
-FROM arillso/ansible:2.14.1 as production
+FROM alpinelinux/ansible:latest as production
 
 # Copy binary from build to main folder
 COPY --from=builder /build/main /usr/local/bin
