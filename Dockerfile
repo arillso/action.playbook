@@ -17,9 +17,9 @@ RUN go mod download
 # Build the application
 RUN go build -o main
 
-FROM alpinelinux/ansible:latest-x86_64 as production
+FROM arillso/ansible:latest as production
 
-RUN pip3 install boto3 botocore
+#RUN pip3 install boto3 botocore
 
 # Copy binary from build to main folder
 COPY --from=builder /build/main /usr/local/bin
