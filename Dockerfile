@@ -17,10 +17,9 @@ RUN go mod download
 # Build the application
 RUN go build -o main
 
-FROM ubuntu:20.04 as production
+FROM faucet/python3:latest as production
 
-RUN apt install python3 \
-    pip3 install --upgrade pip3 \ 
+RUN pip3 install --upgrade pip3 \ 
     pip3 install boto3 botocore \
     pip3 install ansible ansible-core
 
