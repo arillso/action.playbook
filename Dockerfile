@@ -17,7 +17,7 @@ RUN go mod download
 # Build the application
 RUN go build -o main
 
-FROM ubuntu:latest as production
+FROM ubuntu:20.04 as production
 
 RUN apt install python3 \
     pip3 install --upgrade pip3 \ 
