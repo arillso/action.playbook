@@ -20,7 +20,7 @@ RUN go build -o main
 FROM ubuntu:latest as production
 
 RUN pip3 install --upgrade pip3 \ 
-    pip3 install boto3 botocore 
+    pip3 install boto3 botocore \
     pip3 install ansible ansible-core
 
 # Copy binary from build to main folder
