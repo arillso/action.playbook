@@ -17,9 +17,11 @@ RUN go mod download
 # Build the application
 RUN go build -o main
 
-FROM ansible/ansible:default as production
+FROM ubuntu:latest as production
 
-RUN pip3 install boto3 botocore
+RUN pip3 install --upgrade pip3 \ 
+    pip3 install boto3 botocore 
+    pip3 install ansible ansible-core
 
 # Copy binary from build to main folder
 COPY --from=builder /build/main /usr/local/bin
