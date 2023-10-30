@@ -9,10 +9,11 @@ and [human-readable changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Bump go from 1.14 to 1.18
+- fix(deps): bump arillso/ansible from 2.12.4 to 2.15.4
 - fix(deps): bump github.com/arillso/go.ansible from 0.0.1 to 0.0.2
 - fix(deps): bump github.com/joho/godotenv from 1.4.0 to 1.5.1
 - fix(deps): bump github.com/urfave/cli/v2 from 2.11.1 to 2.25.7
-- Bump go from 1.14 to 1.18
 
 ## 0.0.5
 
