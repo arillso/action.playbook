@@ -5,6 +5,13 @@ and [human-readable changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## master
 
+## 0.0.6
+
+### Changed
+
+- fix(deps): bump github.com/arillso/go.ansible from 0.0.1 to 0.0.2
+- fix(deps): bump github.com/joho/godotenv from 1.4.0 to 1.5.1
+
 ## 0.0.5
 
 ### Changed
