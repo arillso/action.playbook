@@ -5,6 +5,12 @@ and [human-readable changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## master
 
+## 0.0.7
+
+### Changed
+
+- fix(deps): bump arillso/ansible from 2.15.4 to 2.15.5
+
 ## 0.0.6
 
 ### Changed
