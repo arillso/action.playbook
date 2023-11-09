@@ -36,6 +36,11 @@ func main() {
 				Usage:   "path to galaxy requirements",
 				EnvVars: []string{"ANSIBLE_GALAXY_FILE", "INPUT_GALAXY_FILE", "PLUGIN_GALAXY_FILE"},
 			},
+			&cli.StringFlag{
+				Name:    "galaxy-force",
+				Usage:   "galaxy force",
+				EnvVars: []string{"ANSIBLE_GALAXY_FORCE", "INPUT_GALAXY_FORCE", "PLUGIN_GALAXY_FORCE"},
+			},
 			&cli.StringSliceFlag{
 				Name:     "inventory,i",
 				Usage:    "specify inventory host path",
@@ -206,6 +211,7 @@ func run(c *cli.Context) error {
 	playbook := &ansible.AnsiblePlaybook{
 		Config: ansible.Config{
 			GalaxyFile:    c.String("galaxy-file"),
+			GalaxyForce    c.Bool("galaxy-force"),
 			Inventories:   c.StringSlice("inventory"),
 			Playbooks:     c.StringSlice("playbook"),
 			Limit:         c.String("limit"),

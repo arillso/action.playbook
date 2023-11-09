@@ -1,0 +1,20 @@
+# Top-most EditorConfig file
+root = true
+
+# Default settings for all files
+[*]
+charset = utf-8                 # Set the character encoding to UTF-8
+end_of_line = lf                # Use Line Feed for new lines
+indent_size = 4                 # Set the indent size to 4 spaces
+indent_style = space            # Use spaces for indentation
+insert_final_newline = true     # Ensure file ends with a newline
+trim_trailing_whitespace = true # Remove any whitespace at the end of a line
+[{Makefile,go.mod,go.sum,*.go,.gitmodules}]
+indent_style = tab
+indent_size = 4
+
+[*.md]
+indent_size = 4
+trim_trailing_whitespace = false
+
+eclint_indent_style = unset
