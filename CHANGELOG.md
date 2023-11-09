@@ -5,6 +5,12 @@ and [human-readable changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## master
 
+## 0.0.8
+
+### Changed
+
+- feat(variable): Add 'GalaxyForce' booleant
+
 ## 0.0.7
 
 ### Changed

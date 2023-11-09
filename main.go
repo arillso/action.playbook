@@ -211,7 +211,7 @@ func run(c *cli.Context) error {
 	playbook := &ansible.AnsiblePlaybook{
 		Config: ansible.Config{
 			GalaxyFile:    c.String("galaxy-file"),
-			GalaxyForce    c.Bool("galaxy-force"),
+			GalaxyForce:    c.Bool("galaxy-force"),
 			Inventories:   c.StringSlice("inventory"),
 			Playbooks:     c.StringSlice("playbook"),
 			Limit:         c.String("limit"),
