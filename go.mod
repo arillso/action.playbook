@@ -3,7 +3,7 @@ module github.com/arillso/action.playbook
 go 1.18
 
 require (
-	github.com/arillso/go.ansible v0.0.4
+	github.com/arillso/go.ansible v0.1.0
 	github.com/joho/godotenv v1.5.1
 	github.com/urfave/cli/v2 v2.25.7
 )
