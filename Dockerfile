@@ -17,8 +17,8 @@ RUN go mod download
 # Build the application
 RUN go build -o main
 
-FROM cytopia/ansible:2.13 as production
-
+#FROM cytopia/ansible:2.13 as production
+FROM arillso/ansible:2.15.5 as production
 #RUN pip3 install boto3 botocore
 
 # Copy binary from build to main folder
