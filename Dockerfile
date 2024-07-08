@@ -18,7 +18,7 @@ RUN go mod download
 RUN go build -o main
 
 #FROM cytopia/ansible:2.13 as production
-FROM arillso/ansible:2.16.2 as production
+FROM alpinelinux/ansible:latest as production
 
 RUN apk add py3-pip
 RUN pip3 install boto3 botocore
