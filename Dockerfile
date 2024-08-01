@@ -22,7 +22,7 @@ FROM cytopia/ansible:2.13 as production
 
 RUN apk add py3-pip
 RUN apk add mysql-client
-RUN pip3 install boto3 botocore
+RUN pip3 install boto3 botocore PyMySQL
 
 # Copy binary from build to main folder
 COPY --from=builder /build/main /usr/local/bin
