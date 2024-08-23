@@ -68,7 +68,7 @@ func main() {
 				Usage:   "only run plays and tasks tagged with these values",
 				EnvVars: []string{"ANSIBLE_TAGS", "INPUT_TAGS", "PLUGIN_TAGS"},
 			},
-			&cli.StringSliceFlag{
+			&cli.StringFlag{
 				Name:    "extra-vars",
 				Usage:   "set additional variables as key=value",
 				EnvVars: []string{"ANSIBLE_EXTRA_VARS", "INPUT_EXTRA_VARS", "PLUGIN_EXTRA_VARS"},
@@ -212,7 +212,7 @@ func run(c *cli.Context) error {
 			SkipTags:      c.String("skip-tags"),
 			StartAtTask:   c.String("start-at-task"),
 			Tags:          c.String("tags"),
-			ExtraVars:     c.StringSlice("extra-vars"),
+			ExtraVars:     []string{c.String("extra-vars")},
 			ModulePath:    c.StringSlice("module-path"),
 			Check:         c.Bool("check"),
 			Diff:          c.Bool("diff"),
