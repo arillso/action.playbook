@@ -152,8 +152,6 @@ Specifies the identity to use when accessing an Ansible Vault.
 
 The vault password to use. This should be stored in a Secret on Github.
 
-See [https://help.github.com/en/github/automating-your-workflow-with-github-actions/virtual-environments-for-github-actions#creating-and-using-secrets-encrypted-variables](https://help.github.com/en/github/automating-your-workflow-with-github-actions/virtual-environments-for-github-actions#creating-and-using-secrets-encrypted-variables)
-
 ### verbose
 
 Sets the verbosity level, ranging from 0 (minimal output) to 4 (maximum verbosity).
@@ -161,8 +159,6 @@ Sets the verbosity level, ranging from 0 (minimal output) to 4 (maximum verbosit
 ### private_key
 
 Use this key to authenticate the connection. This should be stored in a Secret on Github.
-
-See [https://help.github.com/en/github/automating-your-workflow-with-github-actions/virtual-environments-for-github-actions#creating-and-using-secrets-encrypted-variables](https://help.github.com/en/github/automating-your-workflow-with-github-actions/virtual-environments-for-github-actions#creating-and-using-secrets-encrypted-variables)
 
 ### user
 
@@ -218,19 +214,6 @@ Sets the user to impersonate when using privilege escalation.
     ANSIBLE_DEPRECATION_WARNINGS: 'false'
 ```
 
-## Contributors
-
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-<table>
-  <tr>
-    <td align="center"><a href="https://sbaerlocher.ch"><img src="https://avatars1.githubusercontent.com/u/4160387?v=4" width="100px;" alt=""/><br /><sub><b>Simon Baerlocher</b></sub></a><br /><a href="https://github.com/arillso/action.playbook/commits?author=sbaerlocher" title="Code">💻</a> <a href="#ideas-sbaerlocher" title="Ideas, Planning, & Feedback">🤔</a></td>
-  </tr>
-</table>
-
-<!-- markdownlint-enable -->
-<!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
@@ -238,7 +221,7 @@ Sets the user to impersonate when using privilege escalation.
 
 <!-- markdownlint-disable -->
 
-This project is under the MIT License. See the [LICENSE](licence) file for the full license text.
+This project is under the MIT License. See the [LICENSE](LICENSE) file for the full license text.
 
 <!-- markdownlint-enable -->
 

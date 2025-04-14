@@ -1,29 +1,36 @@
-FROM golang:alpine as builder
+# Stage 1: Build Stage
+FROM golang:alpine AS builder
 
-# Set necessary environmet variables needed for our image
+# Set build environment variables
 ENV GO111MODULE=on \
     CGO_ENABLED=0 \
     GOOS=linux \
     GOARCH=amd64
 
-# Move to working directory /build
-WORKDIR /build
+# Set working directory for building
+WORKDIR /app
 
-# Copy and download dependency using go mod
-COPY . .
-
+# Copy dependency definitions to leverage Docker cache
+COPY go.mod go.sum ./
 RUN go mod download
 
-# Build the application
-RUN go build -o main
+# Copy the rest of the source code
+COPY . .
 
-FROM arillso/ansible:2.15.5 as production
+# Build the application binary
+RUN go build -o main .
 
-# Copy binary from build to main folder
-COPY --from=builder /build/main /usr/local/bin
+# Stage 2: Production Stage
+FROM arillso/ansible:2.18.4
 
-# Run as root
-USER root
+# Copy the compiled binary from the builder stage
+COPY --from=builder /app/main /usr/local/bin/main
 
-# Command to run when starting the container
-CMD ["main"]
+# Set the production user to "ansible"
+USER ansible
+
+# Set the default entrypoint to run the application
+ENTRYPOINT ["/usr/local/bin/main"]
+
+# Healthcheck to verify Ansible functionality
+HEALTHCHECK --interval=30s --timeout=10s CMD ansible --version || exit 1
