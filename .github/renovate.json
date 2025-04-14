@@ -1,0 +1,30 @@
+{
+        "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+        "prCreation": "immediate",
+        "extends": ["config:best-practices"],
+        "dependencyDashboard": true,
+        "schedule": ["on friday"],
+        "platformAutomerge": false,
+        "rangeStrategy": "update-lockfile",
+        "rebaseLabel": "renovate::rebase",
+        "rebaseWhen": "never",
+        "skipInstalls": true,
+        "updatePinnedDependencies": false,
+        "ignoreScripts": false,
+        "lockFileMaintenance": {
+                "enabled": true,
+                "schedule": ["before 4am on monday"]
+        },
+        "customManagers": [
+                {
+                        "customType": "regex",
+                        "fileMatch": ["^Dockerfile$"],
+                        "matchStrings": [
+                                "(?:RUN\\s+(?:apk update\\s+&&\\s+)?apk add --no-cache\\s+|\\\\\\s+)(?<depName>[a-z][a-z0-9-]*)(=(?<currentValue>[a-zA-Z0-9-._]+))?"
+                        ],
+                        "versioningTemplate": "loose",
+                        "datasourceTemplate": "repology",
+                        "packageNameTemplate": "alpine_3_21/{{depName}}"
+                }
+        ]
+}

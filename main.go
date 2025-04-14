@@ -1,3 +1,5 @@
+// Package main implements the entry point for the Ansible Playbook Wrapper.
+// This application executes Ansible playbooks and supports various configuration options.
 package main
 
 import (

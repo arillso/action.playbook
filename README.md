@@ -214,7 +214,6 @@ Sets the user to impersonate when using privilege escalation.
     ANSIBLE_DEPRECATION_WARNINGS: 'false'
 ```
 
-
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## License

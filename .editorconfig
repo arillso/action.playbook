@@ -63,3 +63,10 @@ indent_style = tab             # Use tabs for Makefiles
 [*.{go,work,mod}]
 indent_size = 4
 indent_style = tab
+
+##########################################################################
+# Dockerfile
+##########################################################################
+[Dockerfile]
+indent_size = 8
+indent_style = tab
