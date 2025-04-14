@@ -1,5 +1,5 @@
-github.com/arillso/go.ansible v0.1.0 h1:t/u+t3y4PYcQwj/CU2QayWlDzUWZvvvaAkAv+DFxbqo=
-github.com/arillso/go.ansible v0.1.0/go.mod h1:4xsAZCWUsdoLtOnA4BLoqd+vLD82qqqCZTxDm+c1oP8=
+github.com/arillso/go.ansible v1.0.0 h1:kuRO8WSsuvjgTWn/7H10SaJ8F0W3CGw90djKcEa9GcY=
+github.com/arillso/go.ansible v1.0.0/go.mod h1:mz6MXVIYaoMyzqsS00l4jeIx+hGN0YEvZgG9oNGJPaI=
 github.com/cpuguy83/go-md2man/v2 v2.0.3 h1:qMCsGGgs+MAzDFyp9LpAe1Lqy/fY/qCovCm0qnXZOBM=
 github.com/cpuguy83/go-md2man/v2 v2.0.3/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
