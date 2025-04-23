@@ -1,0 +1,21 @@
+---
+# Megalinter Minimal Configuration
+
+#############################
+# Disabled Linters & Validators
+#############################
+DISABLE_LINTERS:
+    - SPELL_CSPELL
+    - REPOSITORY_DEVSKIM
+
+#############################
+# Auto-Fix and Process Settings
+#############################
+APPLY_FIXES: all # Automatically fix issues where possible
+PARALLEL_PROCESS_NUMBER: 5 # Run 5 processes in parallel
+BASH_SHFMT_ARGUMENTS: "-i 4" # Set shfmt indentation to 4 spaces
+
+#############################
+# Repository Scanning & Documentation Exclusions
+#############################
+REPOSITORY_KICS_CONFIG_FILE: .kics.json # Specify KICS configuration file
