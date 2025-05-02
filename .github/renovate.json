@@ -1,19 +1,79 @@
 {
         "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-        "prCreation": "immediate",
-        "extends": ["config:best-practices"],
-        "dependencyDashboard": true,
-        "schedule": ["on friday"],
-        "platformAutomerge": false,
-        "rangeStrategy": "update-lockfile",
-        "rebaseLabel": "renovate::rebase",
-        "rebaseWhen": "never",
-        "skipInstalls": true,
-        "updatePinnedDependencies": false,
-        "ignoreScripts": false,
-        "lockFileMaintenance": {
+        "extends": [
+                "config:best-practices",
+                ":dependencyDashboard",
+                ":maintainLockFilesWeekly",
+                ":automergePatch",
+                ":semanticCommits"
+        ],
+        "timezone": "Europe/Zurich",
+        "schedule": ["before 5am on Friday"],
+        "prHourlyLimit": 3,
+        "prConcurrentLimit": 8,
+        "labels": ["dependencies"],
+        "updatePinnedDependencies": true,
+        "pruneBranchAfterAutomerge": true,
+        "rangeStrategy": "pin",
+        "assignees": ["sbaerlocher"],
+        "reviewers": ["sbaerlocher"],
+        "dependencyDashboardTitle": "📦 Dependency Dashboard",
+        "rebaseWhen": "auto",
+        "branchPrefix": "renovate/",
+        "commitMessageAction": "chore",
+        "packageRules": [
+                {
+                        "description": "Security Alerts → Automerge",
+                        "matchCategories": ["security"],
+                        "labels": ["dependencies", "security"],
+                        "prPriority": 2,
+                        "automerge": true
+                },
+                {
+                        "description": "Golang dependencies",
+                        "matchManagers": ["gomod"],
+                        "matchFileNames": ["**/*.go", "go.mod", "go.sum"],
+                        "groupName": "golang dependencies",
+                        "prPriority": 1
+                },
+                {
+                        "description": "GitHub Actions updates",
+                        "matchManagers": ["github-actions"],
+                        "groupName": "GitHub Actions",
+                        "prConcurrentLimit": 10
+                },
+                {
+                        "description": "Docker-Image-Updates",
+                        "matchManagers": ["dockerfile"],
+                        "groupName": "Docker Images",
+                        "prConcurrentLimit": 10
+                },
+                {
+                        "description": "Alpine-Packages (repology)",
+                        "matchManagers": ["custom.regex"],
+                        "matchDatasources": ["repology"],
+                        "matchPackageNames": ["/^alpine_3_21\\//"],
+                        "groupName": "Alpine Packages",
+                        "prConcurrentLimit": 10
+                },
+                {
+                        "description": "Patch & Minor → zusammengefasst",
+                        "matchUpdateTypes": ["patch", "minor"],
+                        "groupName": "Non-breaking Updates",
+                        "minimumReleaseAge": "3 days",
+                        "prPriority": 0
+                },
+                {
+                        "description": "Major Updates (Breaking)",
+                        "matchUpdateTypes": ["major"],
+                        "labels": ["dependencies", "breaking"],
+                        "minimumReleaseAge": "7 days",
+                        "automerge": false
+                }
+        ],
+        "vulnerabilityAlerts": {
                 "enabled": true,
-                "schedule": ["before 4am on monday"]
+                "labels": ["dependencies", "security"]
         },
         "customManagers": [
                 {
