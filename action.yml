@@ -1,6 +1,13 @@
 name: "Play Ansible Playbook"
-description: "Github Action for running Ansible Playbooks."
+description: "Github Action for running Ansible Playbooks with advanced configuration options."
+
 inputs:
+    execution_timeout:
+        description: "Timeout in minutes for the playbook execution (default: 30)."
+        required: false
+        default: "30"
+
+    # Galaxy Configuration
     galaxy_file:
         description: "Name of the galaxy file in your workspace."
         required: false
@@ -56,6 +63,8 @@ inputs:
     galaxy_no_deps:
         description: "Disables automatic resolution of dependencies in Ansible Galaxy."
         required: false
+
+    # Playbook Configuration
     inventory:
         description: "Specifies one or more inventory host files for Ansible to use."
         required: true
@@ -80,6 +89,8 @@ inputs:
     module_path:
         description: "Prepends specified paths to the module library path list."
         required: false
+
+    # Execution Options
     check:
         description: "Executes a dry run, showing what changes would be made without making them."
         required: false
@@ -107,6 +118,8 @@ inputs:
     forks:
         description: "Defines the number of parallel processes to use during playbook execution."
         required: false
+
+    # Authentication and Vault
     vault_id:
         description: "Specifies the identity to use when accessing an Ansible Vault."
         required: false
@@ -140,6 +153,8 @@ inputs:
     ssh_extra_args:
         description: "Provides extra arguments to pass only to SSH."
         required: false
+
+    # Privilege Escalation
     become:
         description: "Enables privilege escalation, allowing operations to run as another user."
         required: false
@@ -149,6 +164,7 @@ inputs:
     become_user:
         description: "Sets the user to impersonate when using privilege escalation."
         required: false
+
 runs:
     using: "docker"
     image: "Dockerfile"

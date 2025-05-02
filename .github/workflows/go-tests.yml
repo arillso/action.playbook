@@ -1,0 +1,241 @@
+name: Go Tests
+
+on:
+    push:
+        branches:
+            - "main"
+
+    pull_request:
+        branches:
+            - "main"
+
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+env:
+    GO111MODULE: on
+    GOSUMDB: off
+
+jobs:
+    golang-lint:
+        name: Go Lint
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: "1.23"
+                  check-latest: true
+                  cache: true
+
+            - name: Verify dependencies
+              run: go mod verify
+
+            - name: Install golangci-lint
+              run: |
+                  go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+            - name: Run golangci-lint
+              run: |
+                  golangci-lint run --timeout=5m
+
+    golang-test:
+        name: Go Test (Unit)
+        needs: golang-lint
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        strategy:
+            matrix:
+                go-version: ["1.23"]
+                os: [ubuntu-latest]
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Go ${{ matrix.go-version }}
+              uses: actions/setup-go@v5
+              with:
+                  go-version: ${{ matrix.go-version }}
+                  check-latest: true
+                  cache: true
+
+            - name: Install dependencies
+              run: |
+                  go mod download
+
+            - name: Run tests
+              run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+            - name: Upload coverage to Codecov
+              uses: codecov/codecov-action@v4
+              with:
+                  file: ./coverage.txt
+                  fail_ci_if_error: false
+                  verbose: true
+              env:
+                  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+    golang-build:
+        name: Go Build
+        needs: golang-lint
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        strategy:
+            matrix:
+                go-version: ["1.23"]
+                os: [ubuntu-latest, windows-latest, macos-latest]
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Go ${{ matrix.go-version }}
+              uses: actions/setup-go@v5
+              with:
+                  go-version: ${{ matrix.go-version }}
+                  check-latest: true
+                  cache: true
+
+            - name: Install dependencies
+              run: |
+                  go mod download
+
+            - name: Build
+              run: |
+                  go build -v ./...
+
+    golang-security:
+        name: Go Security Scan
+        needs: golang-lint
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: "1.23"
+                  check-latest: true
+                  cache: true
+
+            - name: Install gosec
+              run: |
+                  go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+            - name: Run gosec
+              run: |
+                  gosec -fmt=sarif -out=gosec-results.sarif ./...
+
+            - name: Upload security analysis results
+              uses: github/codeql-action/upload-sarif@v3
+              with:
+                  sarif_file: gosec-results.sarif
+              if: always()
+              continue-on-error: true
+
+    golang-benchmarks:
+        name: Go Benchmarks
+        needs: golang-build
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: "1.23"
+                  check-latest: true
+                  cache: true
+
+            - name: Install dependencies
+              run: |
+                  go mod download
+
+            - name: Run benchmarks
+              run: |
+                  go test -bench=. -benchmem ./...
+
+    golang-cross-build:
+        name: Go Cross-Platform Build
+        needs: golang-build
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: "1.23"
+                  check-latest: true
+                  cache: true
+
+            - name: Install dependencies
+              run: |
+                  go mod download
+
+            - name: Install gox
+              run: |
+                  go install github.com/mitchellh/gox@latest
+
+            - name: Run cross-platform build
+              run: |
+                  mkdir -p dist
+                  # Explizite Liste der unterstützten Plattformen
+                  gox -output="dist/{{.Dir}}_{{.OS}}_{{.Arch}}" \
+                      -osarch="linux/amd64 linux/386 linux/arm freebsd/amd64 freebsd/386 freebsd/arm netbsd/amd64 netbsd/arm openbsd/amd64 openbsd/386" \
+                      ./...
+
+            - name: Upload build artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: go-binaries
+                  path: dist/
+                  retention-days: 5
+
+    test-summary:
+        name: Test Summary
+        needs:
+            - golang-lint
+            - golang-test
+            - golang-build
+            - golang-security
+            - golang-benchmarks
+            - golang-cross-build
+        runs-on: ubuntu-latest
+        permissions:
+            pull-requests: write
+        if: ${{ always() }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Generate Go test summary
+              run: |
+                  ./tests/test-summary.sh "Go" \
+                    "Go Lint=${{ needs.golang-lint.result }}" \
+                    "Go Unit Tests=${{ needs.golang-test.result }}" \
+                    "Go Build=${{ needs.golang-build.result }}" \
+                    "Go Security=${{ needs.golang-security.result }}" \
+                    "Go Benchmarks=${{ needs.golang-benchmarks.result }}" \
+                    "Go Cross-Platform Build=${{ needs.golang-cross-build.result }}"
+
+            - name: Comment on pull request with Go test results
+              if: ${{ github.event_name == 'pull_request' }}
+              uses: thollander/actions-comment-pull-request@v3
+              with:
+                  file-path: ./Go-results.md
+                  comment-tag: go-test-results
+                  mode: upsert

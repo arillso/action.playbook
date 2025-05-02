@@ -1,0 +1,351 @@
+name: Action Tests
+
+on:
+    push:
+        branches:
+            - "main"
+        paths-ignore:
+            - "README.md"
+            - "LICENSE"
+            - ".github/*.md"
+    pull_request:
+        branches:
+            - "main"
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+env:
+    ANSIBLE_HOST_KEY_CHECKING: "false"
+    ANSIBLE_DEPRECATION_WARNINGS: "false"
+    ANSIBLE_FORCE_COLOR: "true"
+    PY_COLORS: "1"
+    GOPROXY: "https://proxy.golang.org,direct"
+
+jobs:
+    setup-environment:
+        name: Setup Environment
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        outputs:
+            cache-key: ${{ steps.cache-key.outputs.key }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: "1.23"
+                  cache: true
+
+            - name: Generate cache key
+              id: cache-key
+              run: |
+                  echo "key=action-playbook-${{ hashFiles('**/go.sum', 'Dockerfile', 'tests/**/*') }}" >> "$GITHUB_OUTPUT"
+
+    build-action:
+        name: Build Action
+        needs: setup-environment
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: "1.23"
+                  cache: true
+
+            - name: Build Go binary
+              run: |
+                  go build -ldflags="-s -w" -o action-playbook .
+
+            - name: Cache built binary
+              uses: actions/cache@v4
+              with:
+                  path: action-playbook
+                  key: ${{ needs.setup-environment.outputs.cache-key }}-binary
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Build Docker image
+              uses: docker/build-push-action@v5
+              with:
+                  context: .
+                  push: false
+                  load: true
+                  tags: action-playbook:test
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+    test-basic:
+        name: Basic Function Test
+        needs: [setup-environment, build-action]
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Restore cached binary
+              uses: actions/cache@v4
+              with:
+                  path: action-playbook
+                  key: ${{ needs.setup-environment.outputs.cache-key }}-binary
+
+            - name: Run basic playbook
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  execution_timeout: 10
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+    test-advanced:
+        name: Advanced Playbook Test
+        needs: [test-basic]
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Run advanced playbook
+              uses: ./
+              with:
+                  playbook: tests/advanced_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  execution_timeout: 15
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+    test-modes:
+        name: Test Execution Modes
+        needs: [test-basic]
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        strategy:
+            matrix:
+                mode: [check, diff, syntax_check, verbose]
+            fail-fast: false
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Run with check mode
+              if: matrix.mode == 'check'
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  check: true
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Run with diff mode
+              if: matrix.mode == 'diff'
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  diff: true
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Run with syntax check
+              if: matrix.mode == 'syntax_check'
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  syntax_check: true
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Run with verbose output
+              if: matrix.mode == 'verbose'
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  verbose: 3
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+    test-tags:
+        name: Test Tags
+        needs: [test-basic]
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Test with tags
+              uses: ./
+              with:
+                  playbook: tests/tagged_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  tags: "tag1"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Test with skip tags
+              uses: ./
+              with:
+                  playbook: tests/tagged_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  skip_tags: "tag2"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+    test-extra-vars:
+        name: Test Extra Variables
+        needs: [test-basic]
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Test with extra vars
+              uses: ./
+              with:
+                  playbook: tests/extra_vars_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  extra_vars: "my_var=test_value env_var=from_extra_vars"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+    test-advanced-params:
+        name: Test Advanced Parameters
+        needs: [test-basic]
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Test with start at task
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  start_at_task: "Setup"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Test with module path
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  module_path: "./library"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Test with limit
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  limit: "localhost"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+    test-idempotence:
+        name: Test Idempotence
+        needs: [test-basic]
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: First run
+              uses: ./
+              with:
+                  playbook: tests/advanced_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Second run (check idempotence)
+              uses: ./
+              with:
+                  playbook: tests/advanced_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  diff: true
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+    test-summary:
+        name: Test Summary
+        needs:
+            - test-basic
+            - test-advanced
+            - test-modes
+            - test-tags
+            - test-extra-vars
+            - test-advanced-params
+            - test-idempotence
+        runs-on: ubuntu-latest
+        permissions:
+            pull-requests: write
+        if: ${{ always() }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Generate Action test summary
+              run: |
+                  ./tests/test-summary.sh "Action" \
+                  "Basic Tests=${{ needs.test-basic.result }}" \
+                  "Advanced Tests=${{ needs.test-advanced.result }}" \
+                  "Mode Tests=${{ needs.test-modes.result }}" \
+                  "Tag Tests=${{ needs.test-tags.result }}" \
+                  "Extra Vars Tests=${{ needs.test-extra-vars.result }}" \
+                  "Advanced Parameters Tests=${{ needs.test-advanced-params.result }}" \
+                  "Idempotence Tests=${{ needs.test-idempotence.result }}"
+
+            - name: Comment on pull request with test results
+              if: ${{ github.event_name == 'pull_request' }}
+              uses: thollander/actions-comment-pull-request@v3
+              with:
+                  file-path: ./Action-results.md
+                  comment-tag: action-test-results
+                  mode: upsert
