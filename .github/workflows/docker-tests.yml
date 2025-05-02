@@ -26,13 +26,13 @@ jobs:
         timeout-minutes: 10
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+              uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3
 
             - name: Hadolint
-              uses: hadolint/hadolint-action@v3.1.0
+              uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf # v3.1.0
               with:
                   dockerfile: Dockerfile
                   failure-threshold: error
@@ -44,13 +44,13 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+              uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3
 
             - name: Build Docker image
-              uses: docker/build-push-action@v5
+              uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
               with:
                   context: .
                   push: false
@@ -70,16 +70,16 @@ jobs:
         timeout-minutes: 30
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
             - name: Set up QEMU
-              uses: docker/setup-qemu-action@v3
+              uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+              uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3
 
             - name: Build for multiple platforms
-              uses: docker/build-push-action@v5
+              uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
               with:
                   context: .
                   platforms: linux/amd64,linux/arm64
@@ -95,13 +95,13 @@ jobs:
         timeout-minutes: 20
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+              uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3
 
             - name: Build Docker image
-              uses: docker/build-push-action@v5
+              uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
               with:
                   context: .
                   push: false
@@ -119,7 +119,7 @@ jobs:
 
             - name: Upload Trivy scan results to GitHub Security tab
               if: ${{ always() }}
-              uses: github/codeql-action/upload-sarif@v3
+              uses: github/codeql-action/upload-sarif@60168efe1c415ce0f5521ea06d5c2062adbeed1b # v3
               with:
                   sarif_file: "trivy-results.sarif"
 
@@ -130,13 +130,13 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+              uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3
 
             - name: Build Docker image
-              uses: docker/build-push-action@v5
+              uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
               with:
                   context: .
                   push: false
@@ -164,13 +164,13 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+              uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3
 
             - name: Build Docker image
-              uses: docker/build-push-action@v5
+              uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
               with:
                   context: .
                   push: false
@@ -199,11 +199,11 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
             - name: Extract metadata (tags, labels) for Docker
               id: meta
-              uses: docker/metadata-action@v5
+              uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5
               with:
                   tags: |
                       type=semver,pattern={{version}}
@@ -212,10 +212,10 @@ jobs:
                       type=sha
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+              uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3
 
             - name: Build and push Docker image
-              uses: docker/build-push-action@v5
+              uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
               with:
                   context: .
                   push: false
@@ -237,7 +237,7 @@ jobs:
         if: ${{ always() }}
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
             - name: Generate Docker test summary
               run: |
@@ -251,7 +251,7 @@ jobs:
 
             - name: Comment on pull request with test results
               if: ${{ github.event_name == 'pull_request' }}
-              uses: thollander/actions-comment-pull-request@v3
+              uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3
               with:
                   file-path: ./Docker-results.md
                   comment-tag: docker-test-results
