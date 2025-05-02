@@ -29,14 +29,14 @@ jobs:
             pull-requests: write
         steps:
             - name: Checkout Code
-              uses: actions/checkout@v4
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
               with:
                   token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
                   fetch-depth: 0
 
             - name: MegaLinter
               id: ml
-              uses: oxsecurity/megalinter@v8
+              uses: oxsecurity/megalinter@04cf22b980c2e9c2121553417ed651c944afc8e1 # v8
               env:
                   VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -44,7 +44,7 @@ jobs:
 
             - name: Archive production artifacts
               if: success() || failure()
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
               with:
                   name: MegaLinter reports
                   path: |
@@ -59,7 +59,7 @@ jobs:
                   env.APPLY_FIXES_MODE == 'pull_request' &&
                   (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) &&
                   !contains(github.event.head_commit.message, 'skip fix')
-              uses: peter-evans/create-pull-request@v7
+              uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7
               with:
                   token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
                   commit-message: "[MegaLinter] Apply linters automatic fixes"
@@ -91,7 +91,7 @@ jobs:
                   env.APPLY_FIXES_MODE == 'commit' && github.ref != 'refs/heads/main' &&
                   (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) &&
                   !contains(github.event.head_commit.message, 'skip fix')
-              uses: stefanzweifel/git-auto-commit-action@v5
+              uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403 # v5
               with:
                   branch: ${{ github.event.pull_request.head.ref || github.head_ref || github.ref }}
                   commit_message: "[MegaLinter] Apply linters fixes"
