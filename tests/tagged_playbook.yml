@@ -1,0 +1,22 @@
+- name: Test Playbook with Tags
+  hosts: localhost
+  gather_facts: false
+  tasks:
+      - name: Task with tag1
+        ansible.builtin.debug:
+            msg: "Task with Tag1"
+        tags:
+            - tag1
+
+      - name: Task with tag2
+        ansible.builtin.debug:
+            msg: "Task with Tag2"
+        tags:
+            - tag2
+
+      - name: Task with both tags
+        ansible.builtin.debug:
+            msg: "Task with Tag1 and Tag2"
+        tags:
+            - tag1
+            - tag2

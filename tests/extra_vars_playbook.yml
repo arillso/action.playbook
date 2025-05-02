@@ -1,0 +1,11 @@
+- name: Test Playbook with Extra Vars
+  hosts: localhost
+  gather_facts: false
+  tasks:
+      - name: Print Extra Vars
+        ansible.builtin.debug:
+            msg: "Value of my_var: {{ my_var | default('not defined') }}"
+
+      - name: Print Environment Var
+        ansible.builtin.debug:
+            msg: "Value of env_var: {{ env_var | default('not defined') }}"

@@ -4,6 +4,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -14,10 +16,19 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+// Errors defined for better error handling
+var (
+	ErrPlaybookExecution = errors.New("playbook execution failed")
+	ErrConfigLoad        = errors.New("failed to load configuration")
+	ErrInvalidParameter  = errors.New("invalid parameter provided")
+)
+
 func main() {
 	// Load environment file if specified.
 	if filename, found := os.LookupEnv("PLUGIN_ENV_FILE"); found {
-		_ = godotenv.Load(filename)
+		if err := godotenv.Load(filename); err != nil {
+			log.Printf("Warning: Could not load env file: %v", err)
+		}
 	}
 
 	app := &cli.App{
@@ -33,6 +44,13 @@ func main() {
 		// Use the run function as the entry point.
 		Action: run,
 		Flags: []cli.Flag{
+			// Execution configuration
+			&cli.IntFlag{
+				Name:    "execution-timeout",
+				Usage:   "Timeout in minutes for the playbook execution (default: 30)",
+				EnvVars: []string{"ANSIBLE_EXECUTION_TIMEOUT", "INPUT_EXECUTION_TIMEOUT", "PLUGIN_EXECUTION_TIMEOUT"},
+				Value:   30,
+			},
 			// Galaxy related options
 			&cli.StringFlag{
 				Name:    "galaxy-file",
@@ -430,14 +448,53 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error: %v", err)
 	}
 }
 
+// validateParameters checks parameter integrity before execution
+func validateParameters(c *cli.Context) error {
+	// Validate that required inventory files exist
+	for _, inv := range c.StringSlice("inventory") {
+		if _, err := os.Stat(inv); os.IsNotExist(err) {
+			return fmt.Errorf("%w: inventory file does not exist: %s", ErrInvalidParameter, inv)
+		}
+	}
+
+	// Validate that required playbook files exist
+	for _, pb := range c.StringSlice("playbook") {
+		if _, err := os.Stat(pb); os.IsNotExist(err) {
+			return fmt.Errorf("%w: playbook file does not exist: %s", ErrInvalidParameter, pb)
+		}
+	}
+
+	// Validate Galaxy file if specified
+	if galaxyFile := c.String("galaxy-file"); galaxyFile != "" {
+		if _, err := os.Stat(galaxyFile); os.IsNotExist(err) {
+			return fmt.Errorf("%w: galaxy file does not exist: %s", ErrInvalidParameter, galaxyFile)
+		}
+	}
+
+	return nil
+}
+
 func run(c *cli.Context) error {
-	// Create a context with a 5-minute timeout (adjust as necessary for your environment)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+
+	// Validate parameters
+	if err := validateParameters(c); err != nil {
+		return err
+	}
+
+	// Get configurable timeout
+	timeoutDuration := time.Duration(c.Int("execution-timeout")) * time.Minute
+	log.Printf("Setting execution timeout to %v minutes", c.Int("execution-timeout"))
+
+	// Create context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), timeoutDuration)
 	defer cancel()
+
+	// Log playbook execution start
+	log.Printf("Starting Ansible playbook execution with %d playbooks", len(c.StringSlice("playbook")))
 
 	playbook := &ansible.Playbook{
 		Config: ansible.Config{
