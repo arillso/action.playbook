@@ -34,7 +34,7 @@ tests: action-build ## Run action tests with the built Docker image using the pr
 	@docker run --rm \
 		-v "$(PROJECT_DIR):/github/workspace" \
 		-w "/github/workspace" \
-		-e ANSIBLE_PLAYBOOK=tests/playbook.yml -e ANSIBLE_INVENTORY=tests/hosts.yml -e ANSIBLE_GALAXY_FILE=tests/requirements.yml \
+		-e ANSIBLE_PLAYBOOK=tests/basic_playbook.yml -e ANSIBLE_INVENTORY=tests/hosts.yml -e ANSIBLE_GALAXY_FILE=tests/requirements.yml \
 		action:latest
 
 help: ## Display a list of all available make targets along with their descriptions.
