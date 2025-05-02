@@ -13,6 +13,8 @@ on:
 
 permissions:
     contents: read
+    security-events: write
+    pull-requests: write
 
 env:
     IMAGE_NAME: action
@@ -116,10 +118,10 @@ jobs:
                   severity: "CRITICAL,HIGH"
 
             - name: Upload Trivy scan results to GitHub Security tab
+              if: ${{ always() }}
               uses: github/codeql-action/upload-sarif@v3
               with:
                   sarif_file: "trivy-results.sarif"
-              if: always()
 
     docker-integration-test:
         name: Docker Integration Test
@@ -144,7 +146,6 @@ jobs:
 
             - name: Run integration tests
               run: |
-                  # Run the Docker container with the test playbook
                   if docker run --rm \
                     -v "$(pwd)/tests/integration:/tests" \
                     ${{ env.IMAGE_NAME }}:integration \
@@ -179,7 +180,6 @@ jobs:
 
             - name: Run in workflow test
               run: |
-                  # Run the Docker image with a simple test
                   if docker run -v "$(pwd):/app" --rm ${{ env.IMAGE_NAME }}:workflow-test \
                   --playbook /app/tests/basic_playbook.yml --inventory /app/tests/hosts.yml --check; then
                     echo "Workflow test passed"
@@ -191,7 +191,10 @@ jobs:
     docker-publish:
         name: Docker Publish
         if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-        needs: [docker-build, docker-security-scan, docker-integration-test]
+        needs:
+            - docker-build
+            - docker-security-scan
+            - docker-integration-test
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
@@ -231,8 +234,6 @@ jobs:
             - docker-integration-test
             - docker-test-in-workflow
         runs-on: ubuntu-latest
-        permissions:
-            pull-requests: write
         if: ${{ always() }}
         steps:
             - name: Checkout code
