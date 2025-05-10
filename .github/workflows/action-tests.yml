@@ -37,7 +37,7 @@ jobs:
             - name: Setup Go
               uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5
               with:
-                  go-version: "1.24.2"
+                  go-version: "1.24.3"
                   cache: true
 
             - name: Generate cache key
@@ -57,7 +57,7 @@ jobs:
             - name: Setup Go
               uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5
               with:
-                  go-version: "1.24.2"
+                  go-version: "1.24.3"
                   cache: true
 
             - name: Build Go binary
