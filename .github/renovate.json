@@ -78,7 +78,7 @@
         "customManagers": [
                 {
                         "customType": "regex",
-                        "fileMatch": ["^Dockerfile$"],
+                        "managerFilePatterns": ["/^Dockerfile$/"],
                         "matchStrings": [
                                 "(?:RUN\\s+(?:apk update\\s+&&\\s+)?apk add --no-cache\\s+|\\\\\\s+)(?<depName>[a-z][a-z0-9-]*)(=(?<currentValue>[a-zA-Z0-9-._]+))?"
                         ],
