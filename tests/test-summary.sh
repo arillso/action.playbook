@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# Description: Generate a markdown summary of test results with symbols and include overall status in the title.
+# Description: Generate a markdown summary of test results with status indicators
 # Usage:       ./test-summary.sh <Category> <Test1=status> [Test2=status ...]
-# Exit Code:   Always exits with 0 so that downstream steps can run regardless of failures.
+# Exit Code:   Always exits with 0 so that downstream steps can run regardless of failures
 #
 
 set -euo pipefail
@@ -13,7 +13,7 @@ declare -g all_passed_flag=true
 write_header() {
     local file="$1"
     local category="$2"
-    printf -- '## %s Tests Summary\n\n' "$category" >"$file"
+    printf '## %s Test Results\n\n' "$category" >"$file"
 }
 
 process_tests() {
@@ -21,25 +21,31 @@ process_tests() {
     shift
     local all_passed=true
 
-    printf -- '| Test | Status |\n| ---- | ------ |\n' >>"$file"
+    printf '| Test Suite | Status |\n|------------|--------|\n' >>"$file"
 
     for arg in "$@"; do
         if [[ "$arg" =~ ^([^=]+)=(.+)$ ]]; then
             local name="${BASH_REMATCH[1]}"
             local status="${BASH_REMATCH[2]}"
         else
-            printf -- 'Warning: invalid argument "%s"\n' "$arg" >&2
+            printf 'Warning: invalid argument "%s"\n' "$arg" >&2
             continue
         fi
 
-        if [[ "$status" == "success" ]]; then
-            symbol='✅'
-        else
-            symbol='❌'
+        case "$status" in
+        "success")
+            symbol='PASSED'
+            ;;
+        "skipped")
+            symbol='SKIPPED'
+            ;;
+        *)
+            symbol='FAILED'
             all_passed=false
-        fi
+            ;;
+        esac
 
-        printf -- '| %s | %s |\n' "$name" "$symbol" >>"$file"
+        printf '| %s | %s |\n' "$name" "$symbol" >>"$file"
     done
 
     all_passed_flag=$all_passed
@@ -47,47 +53,69 @@ process_tests() {
 
 write_summary() {
     local file="$1"
-    local lines pattern total failed passed
-    pattern='^(##|\| Test \| Status \||\| ---- \| ------ \||$)'
+    local lines pattern total failed passed skipped
+
+    pattern='^(##|\| Test Suite \| Status \||\| ------------ \| -------- \||$)'
     mapfile -t lines < <(grep -vE "$pattern" "$file")
+
     total=${#lines[@]}
     failed=0
+    skipped=0
+
     for line in "${lines[@]}"; do
-        [[ "$line" == *'❌'* ]] && ((failed++))
+        if [[ "$line" == *'FAILED'* ]]; then
+            ((failed++))
+        elif [[ "$line" == *'SKIPPED'* ]]; then
+            ((skipped++))
+        fi
     done
-    passed=$((total - failed))
+
+    passed=$((total - failed - skipped))
 
     {
-        printf -- '### Detailed Summary\n\n'
-        printf -- '- **Total tests:** %d\n' "$total"
-        printf -- '- **Passed:**      %d ✅\n' "$passed"
-        printf -- '- **Failed:**      %d ❌\n' "$failed"
+        printf '\n### Summary\n\n'
+        printf -- '- **Total test suites:** %d\n' "$total"
+        printf -- '- **Passed:** %d\n' "$passed"
+        printf -- '- **Failed:** %d\n' "$failed"
+        printf -- '- **Skipped:** %d\n' "$skipped"
+        printf '\n'
+
+        if [[ $failed -gt 0 ]]; then
+            printf -- '**Status:** Tests failed - review failed test suites above\n'
+        elif [[ $passed -eq 0 ]]; then
+            printf -- '**Status:** No tests executed\n'
+        else
+            printf -- '**Status:** All executed tests passed\n'
+        fi
     } >>"$file"
 }
 
 main() {
     if (($# < 2)); then
+        printf 'Usage: %s <Category> <Test1=status> [Test2=status ...]\n' "$0" >&2
+        printf 'Example: %s "Action" "Basic Tests=success" "Advanced Tests=failure"\n' "$0" >&2
         exit 1
     fi
 
     local category="$1"
     shift
-    local output="./${category}-results.md"
+    local output="./${category// /-}-results.md"
 
     write_header "$output" "$category"
     process_tests "$output" "$@"
     write_summary "$output"
 
-    local status_symbol status_text
+    local status_text
     if $all_passed_flag; then
-        status_symbol='✅'
-        status_text='SUCCESS'
+        status_text='PASSED'
     else
-        status_symbol='❌'
         status_text='FAILED'
     fi
 
-    sed -i "1s/.*/## ${category} Tests Summary — ${status_symbol} ${status_text}/" "$output"
+    # Update header with final status
+    sed -i "1s/.*/## ${category} Test Results - ${status_text}/" "$output"
+
+    printf 'Test summary written to: %s\n' "$output"
 }
 
 main "$@"

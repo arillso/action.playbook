@@ -1,32 +1,56 @@
 ---
-name: MegaLinter
+name: Action Linting
 
-on:
+"on":
     push:
+        branches:
+            - main
+            - "feature/**"
+        paths-ignore:
+            - "**.md"
+            - ".github/ISSUE_TEMPLATE/**"
+            - ".github/CODEOWNERS"
     pull_request:
-        branches: [master, main]
+        branches:
+            - main
+        paths-ignore:
+            - "**.md"
+            - ".github/ISSUE_TEMPLATE/**"
+            - ".github/CODEOWNERS"
+    workflow_dispatch: # No inputs to comply with CKV_GHA_7
 
 env:
-    APPLY_FIXES: all
-    APPLY_FIXES_EVENT: pull_request
-    APPLY_FIXES_MODE: commit
+    APPLY_FIXES: "all"
+    APPLY_FIXES_EVENT: "push,pull_request"
+    APPLY_FIXES_MODE: "commit"
 
 concurrency:
     group: ${{ github.ref }}-${{ github.workflow }}
     cancel-in-progress: true
 
+# Top-level workflow permissions
 permissions:
     contents: write
     pull-requests: write
+    checks: write
+    statuses: write
+    issues: read
+    packages: read
+    actions: read
+    security-events: write
 
 jobs:
     megalinter:
         name: MegaLinter
         runs-on: ubuntu-latest
+        # Job-level permissions (these take precedence over workflow-level)
         permissions:
             contents: write
-            issues: write
             pull-requests: write
+            checks: write
+            statuses: write
+            issues: read
+            security-events: write
         steps:
             - name: Checkout Code
               uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -36,13 +60,17 @@ jobs:
 
             - name: MegaLinter
               id: ml
-              uses: oxsecurity/megalinter@5a91fb06c83d0e69fbd23756d47438aa723b4a5a # v8
+              uses: oxsecurity/megalinter@e08c2b05e3dbc40af4c23f41172ef1e068a7d651 # v8
               env:
-                  VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  # DISABLE: COPYPASTE,SPELL
+                  VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
+                  GITHUB_TOKEN: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+                  # Use root-level configuration file
+                  MEGALINTER_CONFIG: .mega-linter.yml
+                  # Additional options
+                  GITHUB_STATUS_REPORTER: true
+                  GITHUB_COMMENT_REPORTER: ${{ github.event_name == 'pull_request' }}
 
-            - name: Archive production artifacts
+            - name: Archive reports
               if: success() || failure()
               uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
               with:
@@ -55,7 +83,7 @@ jobs:
               id: cpr
               if: >-
                   steps.ml.outputs.has_updated_sources == 1 &&
-                  (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) &&
+                  (env.APPLY_FIXES_EVENT == 'all' || contains(env.APPLY_FIXES_EVENT, github.event_name)) &&
                   env.APPLY_FIXES_MODE == 'pull_request' &&
                   (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) &&
                   !contains(github.event.head_commit.message, 'skip fix')
@@ -65,10 +93,11 @@ jobs:
                   commit-message: "[MegaLinter] Apply linters automatic fixes"
                   title: "[MegaLinter] Apply linters automatic fixes"
                   labels: bot
+
             - name: Create PR output
               if: >-
                   steps.ml.outputs.has_updated_sources == 1 &&
-                  (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) &&
+                  (env.APPLY_FIXES_EVENT == 'all' || contains(env.APPLY_FIXES_EVENT, github.event_name)) &&
                   env.APPLY_FIXES_MODE == 'pull_request' &&
                   (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) &&
                   !contains(github.event.head_commit.message, 'skip fix')
@@ -79,19 +108,20 @@ jobs:
             - name: Prepare commit
               if: >-
                   steps.ml.outputs.has_updated_sources == 1 &&
-                  (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) &&
+                  (env.APPLY_FIXES_EVENT == 'all' || contains(env.APPLY_FIXES_EVENT, github.event_name)) &&
                   env.APPLY_FIXES_MODE == 'commit' && github.ref != 'refs/heads/main' &&
                   (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) &&
                   !contains(github.event.head_commit.message, 'skip fix')
               run: sudo chown -Rc $UID .git/
+
             - name: Commit and push applied linter fixes
               if: >-
                   steps.ml.outputs.has_updated_sources == 1 &&
-                  (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) &&
+                  (env.APPLY_FIXES_EVENT == 'all' || contains(env.APPLY_FIXES_EVENT, github.event_name)) &&
                   env.APPLY_FIXES_MODE == 'commit' && github.ref != 'refs/heads/main' &&
                   (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) &&
                   !contains(github.event.head_commit.message, 'skip fix')
-              uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403 # v5
+              uses: stefanzweifel/git-auto-commit-action@778341af668090896ca464160c2def5d1d1a3eb0 # v6
               with:
                   branch: ${{ github.event.pull_request.head.ref || github.head_ref || github.ref }}
                   commit_message: "[MegaLinter] Apply linters fixes"

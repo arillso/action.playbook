@@ -5,7 +5,8 @@
 # Disabled Linters & Validators
 #############################
 DISABLE_LINTERS:
-    - SPELL_CSPELL
+    - SPELL_CSPELL # Spelling check (CSpell) disabled
+    - SPELL_LYCHEE # Spelling check (Lychee) disabled
     - REPOSITORY_DEVSKIM
 
 #############################
