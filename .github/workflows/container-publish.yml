@@ -1,0 +1,213 @@
+name: Publish Action
+
+on:
+    push:
+        tags:
+            - "v*.*.*"
+    release:
+        types: [published]
+
+permissions:
+    contents: read
+    packages: write
+    id-token: write
+
+env:
+    REGISTRY: ghcr.io
+    IMAGE_NAME: ${{ github.repository }}
+
+concurrency:
+    group: publish-${{ github.ref }}
+    cancel-in-progress: false
+
+jobs:
+    prepare:
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        outputs:
+            version: ${{ steps.version.outputs.version }}
+            is-prerelease: ${{ steps.version.outputs.is-prerelease }}
+            go-version: ${{ steps.versions.outputs.go }}
+            ansible-version: ${{ steps.versions.outputs.ansible }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+            - name: Extract versions
+              id: versions
+              run: |
+                  GO_VERSION=$(grep '^go ' go.mod | cut -d' ' -f2)
+                  ANSIBLE_VERSION=$(grep 'FROM arillso/ansible:' Dockerfile | cut -d':' -f2 | cut -d'@' -f1)
+                  echo "go=${GO_VERSION}" >> "$GITHUB_OUTPUT"
+                  echo "ansible=${ANSIBLE_VERSION}" >> "$GITHUB_OUTPUT"
+
+            - name: Determine version
+              id: version
+              run: |
+                  if [[ "${{ github.event_name }}" == "release" ]]; then
+                    VERSION="${{ github.event.release.tag_name }}"
+                  else
+                    VERSION="${GITHUB_REF#refs/tags/}"
+                  fi
+
+                  echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+                  if [[ "${VERSION}" =~ -[a-zA-Z] ]]; then
+                    echo "is-prerelease=true" >> "$GITHUB_OUTPUT"
+                  else
+                    echo "is-prerelease=false" >> "$GITHUB_OUTPUT"
+                  fi
+
+                  echo "Publishing version: ${VERSION}"
+
+    build-and-push-image:
+        runs-on: ubuntu-latest
+        needs: prepare
+        timeout-minutes: 30
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+            - name: Set up QEMU
+              uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3
+
+            - name: Log in to Container Registry
+              uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Extract metadata
+              id: meta
+              uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5
+              with:
+                  images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+                  tags: |
+                      type=ref,event=tag
+                      type=semver,pattern={{version}}
+                      type=semver,pattern={{major}}.{{minor}}
+                      type=semver,pattern={{major}},enable=${{ !needs.prepare.outputs.is-prerelease }}
+                      type=raw,value=latest,enable=${{ !needs.prepare.outputs.is-prerelease }}
+
+            - name: Build and push Docker image
+              id: build
+              uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6
+              with:
+                  context: .
+                  platforms: linux/amd64,linux/arm64
+                  push: true
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: |
+                      ${{ steps.meta.outputs.labels }}
+                      org.opencontainers.image.title=Ansible Playbook Action
+                      org.opencontainers.image.description=GitHub Action for running Ansible Playbooks
+                      org.opencontainers.image.version=${{ needs.prepare.outputs.version }}
+                      org.opencontainers.image.vendor=Arillso
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+                  sbom: true
+                  provenance: true
+
+            - name: Generate artifact attestation
+              uses: actions/attest-build-provenance@1c608d11d69870c2092266b3f9a6f3abbf17002c # v1
+              with:
+                  subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+                  subject-digest: ${{ steps.build.outputs.digest }}
+                  push-to-registry: true
+
+    create-release:
+        runs-on: ubuntu-latest
+        needs: [prepare, build-and-push-image]
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && needs.build-and-push-image.result == 'success'
+        timeout-minutes: 10
+        permissions:
+            contents: write
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+            - name: Extract changelog
+              id: changelog
+              run: |
+                  VERSION="${{ needs.prepare.outputs.version }}"
+                  VERSION_CLEAN="${VERSION#v}"
+
+                  if grep -q "## \[${VERSION_CLEAN}\]" CHANGELOG.md; then
+                    awk '/^## \['"${VERSION_CLEAN}"'\]/{flag=1; next} /^## \[.*\]/ && flag {exit} flag' CHANGELOG.md > release_notes.md
+                    echo "changelog-found=true" >> "$GITHUB_OUTPUT"
+                  else
+                    echo "No changelog entry found for ${VERSION_CLEAN}" > release_notes.md
+                    echo "changelog-found=false" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2
+              with:
+                  tag_name: ${{ needs.prepare.outputs.version }}
+                  name: ${{ needs.prepare.outputs.version }}
+                  body_path: release_notes.md
+                  draft: false
+                  prerelease: ${{ needs.prepare.outputs.is-prerelease }}
+                  generate_release_notes: ${{ steps.changelog.outputs.changelog-found == 'false' }}
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    publish-summary:
+        name: Publish Summary
+        needs:
+            - prepare
+            - build-and-push-image
+            - create-release
+        runs-on: ubuntu-latest
+        if: always()
+        steps:
+            - name: Generate publish summary
+              run: |
+                  cat > publish-summary.md << 'EOF'
+                  ## Action Publish Results
+
+                  **Version:** ${{ needs.prepare.outputs.version }}
+                  **Is Prerelease:** ${{ needs.prepare.outputs.is-prerelease }}
+                  **Go Version:** ${{ needs.prepare.outputs.go-version }}
+                  **Ansible Version:** ${{ needs.prepare.outputs.ansible-version }}
+
+                  | Step | Status |
+                  |------|--------|
+                  | Build and Push Image | ${{ needs.build-and-push-image.result }} |
+                  | Create Release | ${{ needs.create-release.result || 'skipped' }} |
+
+                  ### Container Image
+                  - **Registry:** ghcr.io
+                  - **Image:** ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.prepare.outputs.version }}
+                  - **Image (Latest):** ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+                  - **Platforms:** linux/amd64, linux/arm64
+                  - **SBOM:** Generated
+                  - **Provenance:** Signed
+
+                  EOF
+
+            - name: Upload publish summary
+              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+              with:
+                  name: publish-summary
+                  path: publish-summary.md
+                  retention-days: 90
+
+            - name: Check publish results
+              run: |
+                  failed_steps=()
+
+                  if [[ "${{ needs.build-and-push-image.result }}" == "failure" ]]; then
+                    failed_steps+=("Build and Push Image")
+                  fi
+
+                  if [[ ${#failed_steps[@]} -gt 0 ]]; then
+                    echo "Critical publish steps failed: ${failed_steps[*]}"
+                    exit 1
+                  fi
+
+                  echo "Action published successfully"
