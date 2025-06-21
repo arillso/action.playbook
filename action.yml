@@ -167,7 +167,7 @@ inputs:
 
 runs:
     using: "docker"
-    image: "ghcr.io/arillso/action.playbook:latest"
+    image: "docker://ghcr.io/arillso/action.playbook:latest"
 branding:
     icon: "play-circle"
     color: "black"
