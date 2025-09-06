@@ -32,7 +32,7 @@ jobs:
             ansible-version: ${{ steps.versions.outputs.ansible }}
         steps:
             - name: Checkout code
-              uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
             - name: Extract versions
               id: versions
@@ -72,7 +72,7 @@ jobs:
             attestations: write
         steps:
             - name: Checkout code
-              uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
@@ -119,7 +119,7 @@ jobs:
                   provenance: true
 
             - name: Generate artifact attestation
-              uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+              uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
               with:
                   subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
                   subject-digest: ${{ steps.build.outputs.digest }}
@@ -134,7 +134,7 @@ jobs:
             contents: write
         steps:
             - name: Checkout code
-              uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
             - name: Extract changelog
               id: changelog

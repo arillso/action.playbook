@@ -41,7 +41,7 @@ jobs:
             ansible-version: ${{ steps.versions.outputs.ansible }}
         steps:
             - name: Checkout code
-              uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
             - name: Determine versions
               id: versions
@@ -72,7 +72,7 @@ jobs:
         timeout-minutes: 10
         steps:
             - name: Checkout code
-              uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
             - name: Setup Go
               uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
@@ -118,7 +118,7 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout code
-              uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
@@ -154,7 +154,7 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout code
-              uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
@@ -194,7 +194,7 @@ jobs:
             fail-fast: false
         steps:
             - name: Checkout code
-              uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
@@ -233,7 +233,7 @@ jobs:
         timeout-minutes: 20
         steps:
             - name: Checkout code
-              uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
@@ -302,7 +302,7 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout code
-              uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
@@ -364,7 +364,7 @@ jobs:
         if: always()
         steps:
             - name: Checkout code
-              uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
             - name: Generate comprehensive test summary
               run: |
