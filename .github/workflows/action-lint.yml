@@ -60,7 +60,7 @@ jobs:
 
             - name: MegaLinter
               id: ml
-              uses: oxsecurity/megalinter@e08c2b05e3dbc40af4c23f41172ef1e068a7d651 # v8
+              uses: oxsecurity/megalinter@0dcbedd66ea456ba2d54fd350affaa15df8a0da3 # v9
               env:
                   VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
                   GITHUB_TOKEN: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
