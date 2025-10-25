@@ -158,7 +158,12 @@ Sets the verbosity level, ranging from 0 (minimal output) to 4 (maximum verbosit
 
 ### private_key
 
-Use this key to authenticate the connection. This should be stored in a Secret on Github.
+Specifies the SSH private key content for connections. The key will be written to a temporary file by the action. This should be stored in a Secret on Github.
+
+**Starting with v1.2.0:** The action automatically normalizes SSH keys (converts CRLF to LF, adds trailing newlines, validates format).
+
+**Note:** For bastion host or ProxyCommand issues on older versions, see the
+[SSH Authentication](#ssh-authentication) section for workarounds.
 
 ### user
 
@@ -199,6 +204,60 @@ Specifies the method to use for privilege escalation (e.g., sudo).
 ### become_user
 
 Sets the user to impersonate when using privilege escalation.
+
+## SSH Authentication
+
+> **✨ New in v1.2.0+**
+>
+> SSH private keys are automatically normalized:
+> - Windows line endings (CRLF) → Unix format (LF)
+> - Missing trailing newlines are added
+> - Format validation (RSA, OpenSSH, EC, DSA)
+
+### Basic Usage
+
+```yaml
+- name: Deploy with Ansible
+  uses: arillso/action.playbook@1.2.0
+  with:
+    playbook: deploy.yml
+    inventory: ansible_hosts.yml
+    private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+  env:
+    ANSIBLE_HOST_KEY_CHECKING: 'false'
+```
+
+### Storing SSH Keys in GitHub Secrets
+
+> **🔒 Security Warning: NEVER commit private SSH keys to your repository!**
+
+1. Go to repository **Settings** → **Secrets and variables** → **Actions**
+2. Click **"New repository secret"**
+3. Name: `SSH_PRIVATE_KEY`
+4. Value: Paste your entire private key (including `-----BEGIN/END-----` headers)
+5. Click **"Add secret"**
+
+Your key must have proper PEM headers (`-----BEGIN RSA PRIVATE KEY-----` or similar). Line endings and trailing newlines are automatically fixed in v1.2.0+.
+
+### Troubleshooting
+
+**For versions < 1.2.0** or edge cases, use `extra_vars` to pass the key file path:
+
+```yaml
+- name: Setup SSH Key
+  run: |
+    echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/ssh_key
+    chmod 600 /tmp/ssh_key
+
+- name: Deploy
+  uses: arillso/action.playbook@master
+  with:
+    playbook: deploy.yml
+    inventory: ansible_hosts.yml
+    extra_vars: ansible_ssh_private_key_file=/tmp/ssh_key
+```
+
+For verbose SSH debugging, set `verbose: 4` in the action inputs.
 
 ## Example Usage
 
