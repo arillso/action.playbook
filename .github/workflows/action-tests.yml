@@ -323,29 +323,36 @@ jobs:
             - name: Generate test SSH key (Unix LF format)
               run: |
                   ssh-keygen -t rsa -b 2048 -f /tmp/test_key_lf -N "" -C "test@example.com"
-                  echo "TEST_KEY_LF<<EOF" >> $GITHUB_ENV
-                  cat /tmp/test_key_lf >> $GITHUB_ENV
-                  echo "" >> $GITHUB_ENV
-                  echo "EOF" >> $GITHUB_ENV
+                  {
+                    echo "TEST_KEY_LF<<EOF"
+                    cat /tmp/test_key_lf
+                    echo ""
+                    echo "EOF"
+                  } >> "$GITHUB_ENV"
 
             - name: Generate test SSH key (Windows CRLF format)
               run: |
                   ssh-keygen -t rsa -b 2048 -f /tmp/test_key_crlf -N "" -C "test@example.com"
-                  # Convert to CRLF
-                  unix2dos /tmp/test_key_crlf
-                  echo "TEST_KEY_CRLF<<EOF" >> $GITHUB_ENV
-                  cat /tmp/test_key_crlf >> $GITHUB_ENV
-                  echo "" >> $GITHUB_ENV
-                  echo "EOF" >> $GITHUB_ENV
+                  # Convert LF to CRLF (Windows line endings)
+                  sed -i 's/$/\r/' /tmp/test_key_crlf
+                  {
+                    echo "TEST_KEY_CRLF<<EOF"
+                    cat /tmp/test_key_crlf
+                    echo ""
+                    echo "EOF"
+                  } >> "$GITHUB_ENV"
 
             - name: Generate test SSH key (No trailing newline)
               run: |
                   ssh-keygen -t rsa -b 2048 -f /tmp/test_key_no_newline -N "" -C "test@example.com"
                   # Remove trailing newline
                   truncate -s -1 /tmp/test_key_no_newline
-                  echo "TEST_KEY_NO_NEWLINE<<EOF" >> $GITHUB_ENV
-                  cat /tmp/test_key_no_newline >> $GITHUB_ENV
-                  echo "EOF" >> $GITHUB_ENV
+                  {
+                    echo "TEST_KEY_NO_NEWLINE<<EOF"
+                    cat /tmp/test_key_no_newline
+                    echo ""
+                    echo "EOF"
+                  } >> "$GITHUB_ENV"
 
             - name: Test with LF formatted key
               uses: ./
@@ -374,12 +381,13 @@ jobs:
               env:
                   ANSIBLE_HOST_KEY_CHECKING: "false"
 
+            # kics-scan ignore-block
             - name: Test with invalid key format (should fail with validation)
               uses: ./
               with:
                   playbook: tests/ssh_key_test_playbook.yml
                   inventory: tests/hosts.yml
-                  private_key: "this-is-not-a-valid-ssh-key"
+                  private_key: "INVALID_TEST_KEY_FORMAT"  # Test value, not a real secret
               continue-on-error: true
               id: test-invalid-key
 

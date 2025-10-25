@@ -162,7 +162,8 @@ Specifies the SSH private key content for connections. The key will be written t
 
 **Starting with v1.2.0:** The action automatically normalizes SSH keys (converts CRLF to LF, adds trailing newlines, validates format).
 
-**Note:** If you're experiencing issues with bastion hosts or ProxyCommand configurations on older versions, see the [SSH Authentication with Bastion Hosts](#ssh-authentication-with-bastion-hosts) section for workarounds.
+**Note:** For bastion host or ProxyCommand issues on older versions, see the
+[SSH Authentication](#ssh-authentication) section for workarounds.
 
 ### user
 

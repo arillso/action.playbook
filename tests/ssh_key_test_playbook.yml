@@ -4,14 +4,14 @@
   connection: local
   gather_facts: false
   tasks:
-      - name: Check if private key was processed
-        ansible.builtin.debug:
-            msg: "SSH key was successfully processed and normalized"
+    - name: Check if private key was processed
+      ansible.builtin.debug:
+        msg: "SSH key was successfully processed and normalized"
 
-      - name: Verify key normalization (v1.2.0+)
-        ansible.builtin.set_fact:
-            test_info: "go.ansible v1.2.0+ automatically normalizes SSH keys (CRLF→LF, adds trailing newline)"
+    - name: Verify key normalization (v1.2.0+)
+      ansible.builtin.set_fact:
+        test_info: "go.ansible v1.2.0+ automatically normalizes SSH keys (CRLF→LF, adds trailing newline)"
 
-      - name: Display test information
-        ansible.builtin.debug:
-            var: test_info
+    - name: Display test information
+      ansible.builtin.debug:
+        var: test_info
