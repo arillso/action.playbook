@@ -21,8 +21,8 @@ name: Action Linting
 
 env:
     APPLY_FIXES: "all"
-    APPLY_FIXES_EVENT: "push,pull_request"
-    APPLY_FIXES_MODE: "commit"
+    APPLY_FIXES_EVENT: "none"
+    APPLY_FIXES_MODE: "none"
 
 concurrency:
     group: ${{ github.ref }}-${{ github.workflow }}
