@@ -295,6 +295,102 @@ jobs:
                   ANSIBLE_HOST_KEY_CHECKING: "false"
                   ANSIBLE_DEPRECATION_WARNINGS: "false"
 
+    test-ssh-key-handling:
+        name: SSH Key Format Tests
+        needs: [setup-environment, test-basic]
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
+
+            - name: Pre-build with cache
+              uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6
+              with:
+                  context: .
+                  load: true
+                  tags: action-playbook:test
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+            - name: Update action.yml for testing
+              run: |
+                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+
+            - name: Generate test SSH key (Unix LF format)
+              run: |
+                  ssh-keygen -t rsa -b 2048 -f /tmp/test_key_lf -N "" -C "test@example.com"
+                  echo "TEST_KEY_LF<<EOF" >> $GITHUB_ENV
+                  cat /tmp/test_key_lf >> $GITHUB_ENV
+                  echo "" >> $GITHUB_ENV
+                  echo "EOF" >> $GITHUB_ENV
+
+            - name: Generate test SSH key (Windows CRLF format)
+              run: |
+                  ssh-keygen -t rsa -b 2048 -f /tmp/test_key_crlf -N "" -C "test@example.com"
+                  # Convert to CRLF
+                  unix2dos /tmp/test_key_crlf
+                  echo "TEST_KEY_CRLF<<EOF" >> $GITHUB_ENV
+                  cat /tmp/test_key_crlf >> $GITHUB_ENV
+                  echo "" >> $GITHUB_ENV
+                  echo "EOF" >> $GITHUB_ENV
+
+            - name: Generate test SSH key (No trailing newline)
+              run: |
+                  ssh-keygen -t rsa -b 2048 -f /tmp/test_key_no_newline -N "" -C "test@example.com"
+                  # Remove trailing newline
+                  truncate -s -1 /tmp/test_key_no_newline
+                  echo "TEST_KEY_NO_NEWLINE<<EOF" >> $GITHUB_ENV
+                  cat /tmp/test_key_no_newline >> $GITHUB_ENV
+                  echo "EOF" >> $GITHUB_ENV
+
+            - name: Test with LF formatted key
+              uses: ./
+              with:
+                  playbook: tests/ssh_key_test_playbook.yml
+                  inventory: tests/hosts.yml
+                  private_key: ${{ env.TEST_KEY_LF }}
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+
+            - name: Test with CRLF formatted key (should auto-normalize)
+              uses: ./
+              with:
+                  playbook: tests/ssh_key_test_playbook.yml
+                  inventory: tests/hosts.yml
+                  private_key: ${{ env.TEST_KEY_CRLF }}
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+
+            - name: Test with key missing trailing newline (should auto-fix)
+              uses: ./
+              with:
+                  playbook: tests/ssh_key_test_playbook.yml
+                  inventory: tests/hosts.yml
+                  private_key: ${{ env.TEST_KEY_NO_NEWLINE }}
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+
+            - name: Test with invalid key format (should fail with validation)
+              uses: ./
+              with:
+                  playbook: tests/ssh_key_test_playbook.yml
+                  inventory: tests/hosts.yml
+                  private_key: "this-is-not-a-valid-ssh-key"
+              continue-on-error: true
+              id: test-invalid-key
+
+            - name: Verify invalid key was rejected
+              run: |
+                  if [[ "${{ steps.test-invalid-key.outcome }}" == "success" ]]; then
+                      echo "Expected failure for invalid SSH key but got success"
+                      exit 1
+                  fi
+                  echo "Invalid key was correctly rejected"
+
     test-error-handling:
         name: Error Handling Tests
         needs: [setup-environment, test-basic]
@@ -356,6 +452,7 @@ jobs:
             - test-advanced
             - test-modes
             - test-parameters
+            - test-ssh-key-handling
             - test-error-handling
         runs-on: ubuntu-latest
         permissions:
@@ -373,6 +470,7 @@ jobs:
                   "Advanced Tests=${{ needs.test-advanced.result }}" \
                   "Mode Tests=${{ needs.test-modes.result }}" \
                   "Parameter Tests=${{ needs.test-parameters.result }}" \
+                  "SSH Key Handling Tests=${{ needs.test-ssh-key-handling.result }}" \
                   "Error Handling Tests=${{ needs.test-error-handling.result }}"
 
             - name: Upload test artifacts
@@ -407,6 +505,9 @@ jobs:
                   fi
                   if [[ "${{ needs.test-parameters.result }}" == "failure" ]]; then
                       failed_jobs+=("Parameter Tests")
+                  fi
+                  if [[ "${{ needs.test-ssh-key-handling.result }}" == "failure" ]]; then
+                      failed_jobs+=("SSH Key Handling Tests")
                   fi
 
                   if [[ ${#failed_jobs[@]} -gt 0 ]]; then

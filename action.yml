@@ -130,7 +130,7 @@ inputs:
         description: "Sets the verbosity level, ranging from 0 (minimal output) to 4 (maximum verbosity)."
         required: false
     private_key:
-        description: "Specifies the SSH private key file for connections."
+        description: "Specifies the SSH private key content for connections. The key will be written to a temporary file by the action. Should be stored in a GitHub Secret."
         required: false
     user:
         description: "Defines the username for making connections."
