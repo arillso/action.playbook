@@ -1,7 +1,7 @@
 # -------------------------
 # Stage 1: Build Stage
 # -------------------------
-FROM golang:alpine@sha256:aee43c3ccbf24fdffb7295693b6e33b21e01baec1b2a55acc351fde345e9ec34 AS builder
+FROM golang:alpine@sha256:d3f0cf7723f3429e3f9ed846243970b20a2de7bae6a5b66fc5914e228d831bbb AS builder
 # Use the official Golang Alpine image and assign this build stage the name "builder".
 
 # Set build environment variables for module support and cross-compilation.
@@ -28,7 +28,7 @@ RUN go build -o main .
 # -------------------------
 # Stage 2: Production Stage (Alpine Linux)
 # -------------------------
-FROM arillso/ansible:2.19.3@sha256:729410f1ffede386a751816b634b7e82e4b3899946afc59c0b024d3742a9f429
+FROM arillso/ansible:2.19.3@sha256:d401e510feb9659d136eca51bfaf4661faa0e3933d093523aa5fbeb799bb16fc
 # Use an Ansible-based Alpine Linux image as the base for the production stage.
 
 # Switch to root user to execute system-level modifications.
