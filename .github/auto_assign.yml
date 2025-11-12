@@ -13,7 +13,7 @@ addAssignees: true
 numberOfReviewers: 0
 # A list of assignees, overrides reviewers if set
 assignees:
-  - sbaerlocher
+    - sbaerlocher
 # A number of assignees to add to the pull request
 # Set to 0 to add all of the assignees.
 # Uses numberOfReviewers if unset.

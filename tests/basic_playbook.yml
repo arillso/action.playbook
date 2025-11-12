@@ -1,0 +1,6 @@
+---
+- name: Facts
+  hosts: localhost
+  tasks:
+      - name: Setup
+        ansible.builtin.setup:

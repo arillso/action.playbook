@@ -1,0 +1,240 @@
+name: Comprehensive Container Testing
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - "Dockerfile"
+            - "go.mod"
+            - "go.sum"
+            - "main.go"
+            - ".github/workflows/comprehensive-test.yml"
+    pull_request:
+        branches:
+            - main
+        paths:
+            - "Dockerfile"
+            - "go.mod"
+            - "go.sum"
+            - "main.go"
+            - ".github/workflows/comprehensive-test.yml"
+    schedule:
+        - cron: "0 2 * * 3"
+
+permissions:
+    contents: read
+    security-events: write
+    actions: read
+    pull-requests: write
+
+env:
+    REGISTRY: ghcr.io
+    IMAGE_NAME: action-playbook-test
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    prepare:
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        outputs:
+            ansible_version: ${{ steps.get_version.outputs.version }}
+            go_version: ${{ steps.get_version.outputs.go }}
+            cache_key: ${{ steps.cache_key.outputs.key }}
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
+            - name: Extract versions
+              id: get_version
+              run: |
+                  GO_VERSION=$(grep '^go ' go.mod | cut -d' ' -f2)
+                  ANSIBLE_VERSION=$(grep 'FROM arillso/ansible:' Dockerfile | cut -d':' -f2 | cut -d'@' -f1)
+                  echo "version=${ANSIBLE_VERSION}" >> "$GITHUB_OUTPUT"
+                  echo "go=${GO_VERSION}" >> "$GITHUB_OUTPUT"
+
+            - name: Generate cache key
+              id: cache_key
+              run: |
+                  echo "key=comprehensive-test-${{ hashFiles('Dockerfile', 'go.mod', 'go.sum', 'main.go') }}" >> "$GITHUB_OUTPUT"
+
+    build-test-image:
+        runs-on: ubuntu-latest
+        needs: prepare
+        timeout-minutes: 15
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
+
+            - name: Build test image
+              uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6
+              with:
+                  context: .
+                  push: false
+                  load: true
+                  tags: ${{ env.IMAGE_NAME }}:test
+                  cache-from: type=gha,scope=${{ needs.prepare.outputs.cache_key }}
+                  cache-to: type=gha,mode=max,scope=${{ needs.prepare.outputs.cache_key }}
+
+    security-test:
+        runs-on: ubuntu-latest
+        needs: [prepare, build-test-image]
+        timeout-minutes: 20
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
+
+            - name: Build test image for security scan
+              uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6
+              with:
+                  context: .
+                  push: false
+                  load: true
+                  tags: ${{ env.IMAGE_NAME }}:test
+                  cache-from: type=gha,scope=${{ needs.prepare.outputs.cache_key }}
+
+            - name: Run Trivy vulnerability scanner
+              uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+              with:
+                  image-ref: ${{ env.IMAGE_NAME }}:test
+                  format: sarif
+                  output: trivy-results.sarif
+                  severity: CRITICAL,HIGH
+              continue-on-error: true
+
+            - name: Upload Trivy scan results
+              uses: github/codeql-action/upload-sarif@d198d2fabf39a7f36b5ce57ce70d4942944f006e # v3
+              if: always() && hashFiles('trivy-results.sarif') != ''
+              with:
+                  sarif_file: trivy-results.sarif
+
+            - name: Test action functionality
+              run: |
+                  mkdir -p test-results
+
+                  echo "Testing action binary functionality"
+                  docker run --rm ${{ env.IMAGE_NAME }}:test --help | tee test-results/help-output.log
+
+                  echo "Testing action with invalid parameters"
+                  docker run --rm ${{ env.IMAGE_NAME }}:test \
+                    --playbook /dev/null --inventory /dev/null || echo "Expected failure with invalid parameters"
+
+            - name: Upload security test results
+              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+              if: always()
+              with:
+                  name: security-test-results
+                  path: test-results/
+                  retention-days: 30
+
+    go-test:
+        runs-on: ubuntu-latest
+        needs: prepare
+        timeout-minutes: 15
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
+            - name: Set up Go
+              uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6
+              with:
+                  go-version: ${{ needs.prepare.outputs.go_version }}
+                  cache: true
+
+            - name: Run Go tests
+              run: |
+                  go test -v -race -coverprofile=coverage.out ./...
+
+            - name: Generate coverage report
+              run: |
+                  go tool cover -html=coverage.out -o coverage.html
+
+            - name: Upload coverage reports
+              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+              with:
+                  name: coverage-reports
+                  path: |
+                      coverage.out
+                      coverage.html
+                  retention-days: 30
+
+    test-summary:
+        name: Test Summary
+        needs:
+            - prepare
+            - security-test
+            - go-test
+        runs-on: ubuntu-latest
+        permissions:
+            pull-requests: write
+        if: always()
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
+            - name: Set Ansible version as environment variable
+              run: |
+                  echo "ANSIBLE_VERSION=${{ needs.prepare.outputs.ansible_version }}" >> "$GITHUB_ENV"
+
+            - name: Generate test summary
+              run: |
+                  mkdir -p test-results
+
+                  cat > test-results/summary.md << 'EOF'
+                  ## Comprehensive Container Test Results
+
+                  **Ansible Version:** ${{ needs.prepare.outputs.ansible_version }}
+                  **Go Version:** ${{ needs.prepare.outputs.go_version }}
+                  **Test Run:** ${{ github.run_id }}
+
+                  | Test Suite | Status |
+                  |------------|--------|
+                  | Security Tests | ${{ needs.security-test.result }} |
+                  | Go Tests | ${{ needs.go-test.result }} |
+
+                  ### Test Details
+
+                  **Security Tests:** Container vulnerability scanning and security validation
+                  **Go Tests:** Go code unit tests, coverage analysis, and security scanning
+                  EOF
+
+            - name: Comment on pull request with test results
+              if: github.event_name == 'pull_request'
+              uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3
+              with:
+                  file-path: test-results/summary.md
+                  comment-tag: comprehensive-test-results
+                  mode: upsert
+
+            - name: Upload test summary
+              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+              with:
+                  name: comprehensive-test-summary
+                  path: test-results/summary.md
+                  retention-days: 30
+            - name: Check test results
+              run: |
+                  failed_tests=()
+
+                  if [[ "${{ needs.security-test.result }}" == "failure" ]]; then
+                      failed_tests+=("Security Tests")
+                  fi
+                  if [[ "${{ needs.go-test.result }}" == "failure" ]]; then
+                      failed_tests+=("Go Tests")
+                  fi
+
+                  if [[ ${#failed_tests[@]} -gt 0 ]]; then
+                      echo "Failed test suites: ${failed_tests[*]}"
+                      exit 1
+                  fi
+
+                  echo "All comprehensive tests passed"

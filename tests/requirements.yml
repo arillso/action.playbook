@@ -2,11 +2,11 @@
 # Roles and Collections
 
 roles:
-  - name: arillso.users
-    src: arillso.users
+    - name: arillso.users
+      src: arillso.users
 
 collections:
-  - name: sbaerlocher.virtualization
-    version: 0.0.2
-  - name: sbaerlocher.windows
-    version: 0.0.1
+    - name: sbaerlocher.virtualization
+      version: 0.0.2
+    - name: sbaerlocher.windows
+      version: 0.0.1

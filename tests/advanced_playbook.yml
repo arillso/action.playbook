@@ -1,0 +1,60 @@
+- name: Advanced Test Playbook
+  hosts: localhost
+  gather_facts: true
+  vars:
+      test_directory: /tmp/ansible-test
+      test_files:
+          - name: file1.txt
+            content: "This is test file 1"
+          - name: file2.txt
+            content: "This is test file 2"
+      test_message: "This is a default message"
+
+  tasks:
+      - name: Display Ansible version
+        ansible.builtin.debug:
+            msg: "Ansible Version: {{ ansible_version.full }}"
+        tags:
+            - info
+
+      - name: Create test directory
+        ansible.builtin.file:
+            path: "{{ test_directory }}"
+            state: directory
+            mode: "0755"
+        tags:
+            - setup
+
+      - name: Create test files
+        ansible.builtin.copy:
+            content: "{{ item.content }}"
+            dest: "{{ test_directory }}/{{ item.name }}"
+            mode: "0644"
+        loop: "{{ test_files }}"
+        tags:
+            - setup
+
+      - name: Output variable from extra_vars
+        ansible.builtin.debug:
+            msg: "The value of the passed variable is: {{ custom_var | default(test_message) }}"
+        tags:
+            - variables
+
+      - name: Trigger handler
+        ansible.builtin.command: echo "Handler triggered"
+        changed_when: true
+        notify: Run test handler
+        tags:
+            - handlers
+
+      - name: Conditional Task
+        ansible.builtin.debug:
+            msg: "This message is only displayed if the condition is met"
+        when: ansible_distribution == 'Ubuntu'
+        tags:
+            - conditionals
+
+  handlers:
+      - name: Run test handler
+        ansible.builtin.debug:
+            msg: "Handler was executed"

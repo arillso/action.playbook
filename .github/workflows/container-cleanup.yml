@@ -1,0 +1,53 @@
+---
+name: Container Registry Cleanup
+
+"on":
+    schedule:
+        # Runs monthly on the 1st at 2:00 UTC
+        - cron: "0 2 1 * *"
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    packages: write
+
+jobs:
+    ghcr-cleanup:
+        name: GitHub Container Registry Cleanup
+        runs-on: ubuntu-latest
+        permissions:
+            packages: write
+        steps:
+            - name: Delete old untagged images
+              uses: snok/container-retention-policy@3b0972b2276b171b212f8c4efbca59ebba26eceb # v3.0.1
+              with:
+                  account: arillso
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  image-names: ansible
+                  cut-off: 60d
+                  keep-n-most-recent: 5
+                  tag-selection: untagged
+                  dry-run: "false"
+
+    cleanup-summary:
+        name: Cleanup Summary
+        needs: [ghcr-cleanup]
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        if: ${{ always() }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
+            - name: Execute cleanup summary script
+              run: |
+                  ./.github/scripts/cleanup-summary.sh \
+                    "GHCR=${{ needs.ghcr-cleanup.result }}"
+
+            - name: Upload Cleanup Report
+              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+              with:
+                  name: cleanup-report
+                  path: cleanup-report.md
+                  retention-days: 30

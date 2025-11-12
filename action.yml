@@ -1,105 +1,173 @@
-name: 'Play Ansible Playbook'
-description: 'Github Action for running Ansible Playbooks.'
+name: "Play Ansible Playbook"
+description: "Github Action for running Ansible Playbooks with advanced configuration options."
+
 inputs:
-  galaxy_file:
-    description: 'Name of the galaxy file in your workspace.'
-    required: false
-  inventory:
-    description: 'Name of the inventory file in your workspace.'
-    required: true
-  playbook:
-    description: 'Name of the playbook in your workspace.'
-    required: true
-  limit:
-    description: 'Further limit selected hosts to an additional pattern.'
-    required: false
-  skip_tags:
-    description: 'Only run plays and tasks whose tags do not match these values.'
-    required: false
-  start_at_task:
-    description: 'Start the playbook at the task matching this name.'
-    required: false
-  tags:
-    description: 'Only run plays and tasks tagged with these values.'
-    required: false
-  extra_vars:
-    description: 'Set additional variables as key=value.'
-    required: false
-  module_path:
-    description: 'Prepend paths to module library.'
-    required: false
-  check:
-    description: 'Run a check, do not apply any changes.'
-    required: false
-  diff:
-    description: 'When changing (small) files and templates, show the differences in those files; works great with –check.'
-    required: false
-  flush_cache:
-    description: 'Clear the fact cache for every host in inventory.'
-    required: false
-  force_handlers:
-    description: 'Run handlers even if a task fails.'
-    required: false
-  list_hosts:
-    description: 'Outputs a list of matching hosts.'
-    required: false
-  list_tags:
-    description: 'List all available tags.'
-    required: false
-  list_tasks:
-    description: 'List all tasks that would be executed.'
-    required: false
-  syntax_check:
-    description: 'Perform a syntax check on the playbook.'
-    required: false
-  forks:
-    description: 'Specify number of parallel processes to use.'
-    required: false
-  vault_id:
-    description: 'The vault identity to use.'
-    required: false
-  vault_password:
-    description: 'The vault password to use.'
-    required: false
-  verbose:
-    description: 'Level of verbosity, 0 up to 4.'
-    required: false
-  private_key:
-    description: 'Use this key to authenticate the connection.'
-    required: false
-  user:
-    description: 'Connect as this user.'
-    required: false
-  connection:
-    description: 'Connection type to use.'
-    required: false
-  timeout:
-    description: 'Override the connection timeout in seconds.'
-    required: false
-  ssh_common_args:
-    description: 'Specify common arguments to pass to sftp/scp/ssh.'
-    required: false
-  sftp_extra_args:
-    description: 'Specify extra arguments to pass to sftp only.'
-    required: false
-  scp_extra_args:
-    description: 'Specify extra arguments to pass to scp only.'
-    required: false
-  ssh-extra-args:
-    description: 'Specify extra arguments to pass to ssh only.'
-    required: false
-  become:
-    description: 'Run operations with become.'
-    required: false
-  become_method:
-    description: 'Privilege escalation method to use.'
-    required: false
-  become_user:
-    description: 'Run operations as this user.'
-    required: false
+    execution_timeout:
+        description: "Timeout in minutes for the playbook execution (default: 30)."
+        required: false
+        default: "30"
+
+    # Galaxy Configuration
+    galaxy_file:
+        description: "Name of the galaxy file in your workspace."
+        required: false
+
+    galaxy_force:
+        description: "Forces the reinstallation of roles or collections from the Galaxy file."
+        required: false
+    galaxy_api_key:
+        description: "Sets the API key used for authenticating to Ansible Galaxy."
+        required: false
+    galaxy_api_server_url:
+        description: "Defines the URL of the Ansible Galaxy API server to interact with."
+        required: false
+    galaxy_collections_path:
+        description: "Sets the path to the directory where Galaxy collections are stored."
+        required: false
+    galaxy_disable_gpg_verify:
+        description: "Disables GPG signature verification for Ansible Galaxy operations."
+        required: false
+    galaxy_force_with_deps:
+        description: "Forces the installation of collections with their dependencies from Galaxy."
+        required: false
+    galaxy_ignore_certs:
+        description: "Ignores SSL certificate validation for Ansible Galaxy requests."
+        required: false
+    galaxy_ignore_signature_status_codes:
+        description: "Lists HTTP status codes to ignore during Galaxy signature validation."
+        required: false
+    galaxy_keyring:
+        description: "Specifies the path to the GPG keyring used with Ansible Galaxy."
+        required: false
+    galaxy_offline:
+        description: "Enables offline mode, preventing any requests to Ansible Galaxy."
+        required: false
+    galaxy_pre:
+        description: "Allows the installation of pre-release versions from Ansible Galaxy."
+        required: false
+    galaxy_required_valid_signature_count:
+        description: "Sets the required number of valid GPG signatures for Galaxy content."
+        required: false
+    galaxy_requirements_file:
+        description: "Defines the path to the Ansible Galaxy requirements file."
+        required: false
+    galaxy_signature:
+        description: "Specifies a specific GPG signature to verify for Galaxy content."
+        required: false
+    galaxy_timeout:
+        description: "Sets the timeout in seconds for Ansible Galaxy operations."
+        required: false
+    galaxy_upgrade:
+        description: "Enables automatic upgrading of Galaxy collections to the latest version."
+        required: false
+    galaxy_no_deps:
+        description: "Disables automatic resolution of dependencies in Ansible Galaxy."
+        required: false
+
+    # Playbook Configuration
+    inventory:
+        description: "Specifies one or more inventory host files for Ansible to use."
+        required: true
+    playbook:
+        description: "List of playbooks to apply."
+        required: true
+    limit:
+        description: "Limits the playbook execution to a specific group of hosts."
+        required: false
+    skip_tags:
+        description: "Only run plays and tasks whose tags do not match these values."
+        required: false
+    start_at_task:
+        description: "Start the playbook at the task matching this name."
+        required: false
+    tags:
+        description: "Executes only tasks and plays with specified tags."
+        required: false
+    extra_vars:
+        description: "Sets additional variables in a key=value format for the playbook."
+        required: false
+    module_path:
+        description: "Prepends specified paths to the module library path list."
+        required: false
+
+    # Execution Options
+    check:
+        description: "Executes a dry run, showing what changes would be made without making them."
+        required: false
+    diff:
+        description: "Shows the differences in files and templates when changing them."
+        required: false
+    flush_cache:
+        description: "Clears the fact cache for every host in the inventory."
+        required: false
+    force_handlers:
+        description: "Runs all handlers even if a task fails."
+        required: false
+    list_hosts:
+        description: "Outputs a list of matching hosts."
+        required: false
+    list_tags:
+        description: "List all available tags."
+        required: false
+    list_tasks:
+        description: "List all tasks that would be executed."
+        required: false
+    syntax_check:
+        description: "Performs a syntax check on the playbook, without executing it."
+        required: false
+    forks:
+        description: "Defines the number of parallel processes to use during playbook execution."
+        required: false
+
+    # Authentication and Vault
+    vault_id:
+        description: "Specifies the identity to use when accessing an Ansible Vault."
+        required: false
+    vault_password:
+        description: "Sets the password to use for decrypting an Ansible Vault."
+        required: false
+    verbose:
+        description: "Sets the verbosity level, ranging from 0 (minimal output) to 4 (maximum verbosity)."
+        required: false
+    private_key:
+        description: "Specifies the SSH private key content for connections. The key will be written to a temporary file by the action. Should be stored in a GitHub Secret."
+        required: false
+    user:
+        description: "Defines the username for making connections."
+        required: false
+    connection:
+        description: "Sets the type of connection to use (e.g., SSH)."
+        required: false
+    timeout:
+        description: "Overrides the default connection timeout in seconds."
+        required: false
+    ssh_common_args:
+        description: "Specifies common arguments to pass to all SSH-based connection methods (SSH, SCP, SFTP)."
+        required: false
+    sftp_extra_args:
+        description: "Provides extra arguments to pass only to SFTP."
+        required: false
+    scp_extra_args:
+        description: "Provides extra arguments to pass only to SCP."
+        required: false
+    ssh_extra_args:
+        description: "Provides extra arguments to pass only to SSH."
+        required: false
+
+    # Privilege Escalation
+    become:
+        description: "Enables privilege escalation, allowing operations to run as another user."
+        required: false
+    become_method:
+        description: "Specifies the method to use for privilege escalation (e.g., sudo)."
+        required: false
+    become_user:
+        description: "Sets the user to impersonate when using privilege escalation."
+        required: false
+
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
+    using: "docker"
+    image: "docker://ghcr.io/arillso/action.playbook:latest"
 branding:
-  icon: 'play-circle'
-  color: 'black'
+    icon: "play-circle"
+    color: "black"
