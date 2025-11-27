@@ -46,7 +46,7 @@ jobs:
             cache_key: ${{ steps.cache_key.outputs.key }}
         steps:
             - name: Checkout Code
-              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+              uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
 
             - name: Extract versions
               id: get_version
@@ -67,7 +67,7 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout Code
-              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+              uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
@@ -88,7 +88,7 @@ jobs:
         timeout-minutes: 20
         steps:
             - name: Checkout Code
-              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+              uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
@@ -129,7 +129,7 @@ jobs:
                     --playbook /dev/null --inventory /dev/null || echo "Expected failure with invalid parameters"
 
             - name: Upload security test results
-              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+              uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
               if: always()
               with:
                   name: security-test-results
@@ -142,7 +142,7 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout Code
-              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+              uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
 
             - name: Set up Go
               uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6
@@ -159,7 +159,7 @@ jobs:
                   go tool cover -html=coverage.out -o coverage.html
 
             - name: Upload coverage reports
-              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+              uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
               with:
                   name: coverage-reports
                   path: |
@@ -179,7 +179,7 @@ jobs:
         if: always()
         steps:
             - name: Checkout code
-              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+              uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
 
             - name: Set Ansible version as environment variable
               run: |
@@ -216,7 +216,7 @@ jobs:
                   mode: upsert
 
             - name: Upload test summary
-              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+              uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
               with:
                   name: comprehensive-test-summary
                   path: test-results/summary.md
