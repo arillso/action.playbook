@@ -32,7 +32,7 @@ jobs:
             ansible-version: ${{ steps.versions.outputs.ansible }}
         steps:
             - name: Checkout code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
             - name: Extract versions
               id: versions
@@ -72,7 +72,7 @@ jobs:
             attestations: write
         steps:
             - name: Checkout code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
@@ -134,7 +134,7 @@ jobs:
             contents: write
         steps:
             - name: Checkout code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
             - name: Extract changelog
               id: changelog
@@ -197,7 +197,7 @@ jobs:
                   EOF
 
             - name: Upload publish summary
-              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+              uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
               with:
                   name: publish-summary
                   path: publish-summary.md

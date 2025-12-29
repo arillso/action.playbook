@@ -46,7 +46,7 @@ jobs:
             cache_key: ${{ steps.cache_key.outputs.key }}
         steps:
             - name: Checkout Code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
             - name: Extract versions
               id: get_version
@@ -67,7 +67,7 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout Code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
@@ -88,7 +88,7 @@ jobs:
         timeout-minutes: 20
         steps:
             - name: Checkout Code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
@@ -112,7 +112,7 @@ jobs:
               continue-on-error: true
 
             - name: Upload Trivy scan results
-              uses: github/codeql-action/upload-sarif@45c373516f557556c15d420e3f5e0aa3d64366bc # v3
+              uses: github/codeql-action/upload-sarif@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # v4
               if: always() && hashFiles('trivy-results.sarif') != ''
               with:
                   sarif_file: trivy-results.sarif
@@ -129,7 +129,7 @@ jobs:
                     --playbook /dev/null --inventory /dev/null || echo "Expected failure with invalid parameters"
 
             - name: Upload security test results
-              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+              uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
               if: always()
               with:
                   name: security-test-results
@@ -142,7 +142,7 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout Code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
             - name: Set up Go
               uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6
@@ -159,7 +159,7 @@ jobs:
                   go tool cover -html=coverage.out -o coverage.html
 
             - name: Upload coverage reports
-              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+              uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
               with:
                   name: coverage-reports
                   path: |
@@ -179,7 +179,7 @@ jobs:
         if: always()
         steps:
             - name: Checkout code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
             - name: Set Ansible version as environment variable
               run: |
@@ -216,7 +216,7 @@ jobs:
                   mode: upsert
 
             - name: Upload test summary
-              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+              uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
               with:
                   name: comprehensive-test-summary
                   path: test-results/summary.md
