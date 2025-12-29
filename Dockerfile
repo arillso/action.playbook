@@ -37,7 +37,7 @@ USER root
 # Update package repositories and install the 'shadow' package for access to usermod and groupmod commands.
 RUN apk update && \
 	apk add --no-cache \
-	shadow=4.17.3-r0
+	shadow=4.18.0-r0
 
 # Modify the UID and GID of the 'ansible' user from 1000 to 1001 and update file ownership:
 # - Change the UID of user 'ansible' to 1001.
