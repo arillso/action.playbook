@@ -41,7 +41,7 @@ jobs:
             ansible-version: ${{ steps.versions.outputs.ansible }}
         steps:
             - name: Checkout code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
             - name: Determine versions
               id: versions
@@ -72,7 +72,7 @@ jobs:
         timeout-minutes: 10
         steps:
             - name: Checkout code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
             - name: Setup Go
               uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6
@@ -85,7 +85,7 @@ jobs:
                   go build -ldflags="-s -w" -o action-playbook .
 
             - name: Cache built binary
-              uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+              uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5
               with:
                   path: action-playbook
                   key: ${{ needs.setup-environment.outputs.cache-key }}-binary
@@ -118,7 +118,7 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
@@ -154,7 +154,7 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
@@ -194,7 +194,7 @@ jobs:
             fail-fast: false
         steps:
             - name: Checkout code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
@@ -233,7 +233,7 @@ jobs:
         timeout-minutes: 20
         steps:
             - name: Checkout code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
@@ -302,7 +302,7 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
@@ -406,7 +406,7 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
@@ -469,7 +469,7 @@ jobs:
         if: always()
         steps:
             - name: Checkout code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
             - name: Generate comprehensive test summary
               run: |
@@ -483,7 +483,7 @@ jobs:
 
             - name: Upload test artifacts
               if: always()
-              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+              uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
               with:
                   name: action-test-results-${{ github.run_id }}
                   path: |

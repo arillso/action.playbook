@@ -53,7 +53,7 @@ jobs:
             security-events: write
         steps:
             - name: Checkout Code
-              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
               with:
                   token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
                   fetch-depth: 0
@@ -72,7 +72,7 @@ jobs:
 
             - name: Archive reports
               if: success() || failure()
-              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+              uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
               with:
                   name: MegaLinter reports
                   path: |
@@ -87,7 +87,7 @@ jobs:
                   env.APPLY_FIXES_MODE == 'pull_request' &&
                   (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) &&
                   !contains(github.event.head_commit.message, 'skip fix')
-              uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
+              uses: peter-evans/create-pull-request@98357b18bf14b5342f975ff684046ec3b2a07725 # v8
               with:
                   token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
                   commit-message: "[MegaLinter] Apply linters automatic fixes"
