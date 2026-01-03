@@ -1,90 +1,25 @@
 {
-        "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-        "extends": [
-                "config:best-practices",
-                ":dependencyDashboard",
-                ":maintainLockFilesWeekly",
-                ":automergePatch",
-                ":semanticCommits"
-        ],
-        "timezone": "Europe/Zurich",
-        "schedule": ["before 5am on Friday"],
-        "prHourlyLimit": 3,
-        "prConcurrentLimit": 8,
-        "labels": ["dependencies"],
-        "updatePinnedDependencies": true,
-        "pruneBranchAfterAutomerge": true,
-        "rangeStrategy": "pin",
-        "assignees": ["sbaerlocher"],
-        "reviewers": ["sbaerlocher"],
-        "dependencyDashboardTitle": "📦 Dependency Dashboard",
-        "rebaseWhen": "auto",
-        "branchPrefix": "renovate/",
-        "commitMessageAction": "chore",
-        "packageRules": [
-                {
-                        "description": "Security Alerts → Automerge",
-                        "matchCategories": ["security"],
-                        "labels": ["dependencies", "security"],
-                        "prPriority": 2,
-                        "automerge": true
-                },
-                {
-                        "description": "Golang dependencies",
-                        "matchManagers": ["gomod"],
-                        "matchFileNames": ["**/*.go", "go.mod", "go.sum"],
-                        "groupName": "golang dependencies",
-                        "prPriority": 1
-                },
-                {
-                        "description": "GitHub Actions updates",
-                        "matchManagers": ["github-actions"],
-                        "groupName": "GitHub Actions",
-                        "prConcurrentLimit": 10
-                },
-                {
-                        "description": "Docker-Image-Updates",
-                        "matchManagers": ["dockerfile"],
-                        "groupName": "Docker Images",
-                        "prConcurrentLimit": 10
-                },
-                {
-                        "description": "Alpine-Packages (repology)",
-                        "matchManagers": ["custom.regex"],
-                        "matchDatasources": ["repology"],
-                        "matchPackageNames": ["/^alpine_3_21\\//"],
-                        "groupName": "Alpine Packages",
-                        "prConcurrentLimit": 10
-                },
-                {
-                        "description": "Patch & Minor → zusammengefasst",
-                        "matchUpdateTypes": ["patch", "minor"],
-                        "groupName": "Non-breaking Updates",
-                        "minimumReleaseAge": "3 days",
-                        "prPriority": 0
-                },
-                {
-                        "description": "Major Updates (Breaking)",
-                        "matchUpdateTypes": ["major"],
-                        "labels": ["dependencies", "breaking"],
-                        "minimumReleaseAge": "7 days",
-                        "automerge": false
-                }
-        ],
-        "vulnerabilityAlerts": {
-                "enabled": true,
-                "labels": ["dependencies", "security"]
-        },
-        "customManagers": [
-                {
-                        "customType": "regex",
-                        "managerFilePatterns": ["/^Dockerfile$/"],
-                        "matchStrings": [
-                                "(?:RUN\\s+(?:apk update\\s+&&\\s+)?apk add --no-cache\\s+|\\\\\\s+)(?<depName>[a-z][a-z0-9-]*)(=(?<currentValue>[a-zA-Z0-9-._]+))?"
-                        ],
-                        "versioningTemplate": "loose",
-                        "datasourceTemplate": "repology",
-                        "packageNameTemplate": "alpine_3_21/{{depName}}"
-                }
-        ]
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": ["github>arillso/arillso:renovate-actions"],
+    "packageRules": [
+        {
+            "description": "Alpine packages (repology)",
+            "matchManagers": ["custom.regex"],
+            "matchDatasources": ["repology"],
+            "matchPackageNames": ["/^alpine_3_21\\//"],
+            "groupName": "Alpine packages"
+        }
+    ],
+    "customManagers": [
+        {
+            "customType": "regex",
+            "managerFilePatterns": ["/^Dockerfile$/"],
+            "matchStrings": [
+                "(?:RUN\\s+(?:apk update\\s+&&\\s+)?apk add --no-cache\\s+|\\\\\\s+)(?<depName>[a-z][a-z0-9-]*)(=(?<currentValue>[a-zA-Z0-9-._]+))?"
+            ],
+            "versioningTemplate": "loose",
+            "datasourceTemplate": "repology",
+            "packageNameTemplate": "alpine_3_21/{{depName}}"
+        }
+    ]
 }

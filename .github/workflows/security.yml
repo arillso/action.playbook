@@ -1,4 +1,4 @@
-name: Comprehensive Container Testing
+name: Security
 
 on:
     push:
@@ -9,7 +9,7 @@ on:
             - "go.mod"
             - "go.sum"
             - "main.go"
-            - ".github/workflows/comprehensive-test.yml"
+            - ".github/workflows/security.yml"
     pull_request:
         branches:
             - main
@@ -18,9 +18,9 @@ on:
             - "go.mod"
             - "go.sum"
             - "main.go"
-            - ".github/workflows/comprehensive-test.yml"
+            - ".github/workflows/security.yml"
     schedule:
-        - cron: "0 2 * * 3"
+        - cron: "0 2 * * 1"
 
 permissions:
     contents: read
