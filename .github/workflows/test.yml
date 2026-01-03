@@ -1,4 +1,4 @@
-name: Tests
+name: Action Tests
 
 on:
     push:
