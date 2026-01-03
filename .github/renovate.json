@@ -1,6 +1,6 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": ["github>arillso/arillso:renovate-actions"],
+    "extends": ["github>arillso/.github:renovate-actions"],
     "packageRules": [
         {
             "description": "Alpine packages (repology)",
