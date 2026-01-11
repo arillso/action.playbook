@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-01-11
+
+### Changed
+
+- Replaced MegaLinter with dedicated linters for improved workflow efficiency
+- Improved workflow naming consistency across CI/CD pipelines
+- Updated Renovate preset path to `.github` repository
+
+### Updated
+
+- `arillso/ansible` Docker image from 2.19.3 to 2.20.1
+- `github.com/urfave/cli/v3` from 3.4.1 to 3.6.1
+- `shadow` package from 4.17.3-r0 to 4.18.0-r0
+- Go pinned to version 1.25.5
+- GitHub Actions dependencies (reviewdog/action-actionlint and others)
+
 ## [0.3.0] - 2025-10-26
 
 ### Added
