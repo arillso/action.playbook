@@ -32,10 +32,10 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Code
-              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
             - name: Setup Go
-              uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6
+              uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6
               with:
                   go-version-file: go.mod
                   cache: true
@@ -50,10 +50,10 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Code
-              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
             - name: Run actionlint
-              uses: reviewdog/action-actionlint@83e4ed25b168066ad8f62f5afbb29ebd8641d982 # v1
+              uses: reviewdog/action-actionlint@e58ee9d111489c31395fbe4857b0be6e7635dbda # v1
               with:
                   reporter: github-pr-review
                   fail_level: error
@@ -63,7 +63,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Code
-              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
             - name: Run ShellCheck
               uses: reviewdog/action-shellcheck@4c07458293ac342d477251099501a718ae5ef86e # v1.32.0
@@ -76,7 +76,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Code
-              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
             - name: Run yamllint
               uses: ibiqlik/action-yamllint@2576378a8e339169678f9939646ee3ee325e845c # v3
