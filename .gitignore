@@ -1,25 +1,53 @@
-# Created by https://www.gitignore.io/api/go
-# Edit at https://www.gitignore.io/?templates=go
-
-### Go ###
-# Binaries for programs and plugins
+# Go
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-
-# Test binary, built with `go test -c`
 *.test
-
-# Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+go.work
 
-# Dependency directories (remove the comment below to include it)
-# vendor/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
 
-### Go Patch ###
-/vendor/
-/Godeps/
+# Ansible
+*.retry
+.ansible/
 
-# End of https://www.gitignore.io/api/go
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.tox/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Build
+*.tar.gz
+*.zip
+
+# Environments
+.env
+.venv/
+venv/
+
+# Reports
+megalinter-reports

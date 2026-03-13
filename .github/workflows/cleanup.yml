@@ -2,16 +2,16 @@
 name: Container Registry Cleanup
 
 on:
-  schedule:
-    - cron: "0 2 1 * *"
-  workflow_dispatch:
+    schedule:
+        - cron: "0 2 1 * *"
+    workflow_dispatch:
 
 permissions:
-  contents: read
-  packages: write
+    contents: read
+    packages: write
 
 jobs:
-  cleanup:
-    uses: arillso/.github/.github/workflows/cleanup-container-registry.yml@2026-03-11
-    with:
-      image_names: ansible
+    cleanup:
+        uses: arillso/.github/.github/workflows/cleanup-container-registry.yml@2026-03-11
+        with:
+            image_names: ansible
