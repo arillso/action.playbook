@@ -38,7 +38,7 @@ git checkout -b fix/issue-description
 
 - Follow standard Go conventions (gofmt, golangci-lint)
 - Line length: no hard limit, but keep it readable
-- Add docstrings for exported functions and types
+- Add doc comments for exported functions and types
 - Minimal dependencies
 
 ### YAML
@@ -79,16 +79,18 @@ make build-docker
 
 ### Commit Messages
 
-Write clear, descriptive commit messages:
+Use [Conventional Commits](https://www.conventionalcommits.org/) format:
 
 ```text
-Brief summary (50 chars or less)
+type(scope): brief summary
 
-- Detailed description with bullet points
-- Reference related issues
+Body explaining the why, not the what.
+Reference related issues.
 
 Fixes #123
 ```
+
+Where `type` is one of: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, etc.
 
 ### Pull Request Process
 
