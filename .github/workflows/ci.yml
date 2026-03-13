@@ -21,15 +21,15 @@ permissions:
 
 jobs:
     ci:
-        uses: arillso/.github/.github/workflows/ci-go-action.yml@2026-03-09
+        uses: arillso/.github/.github/workflows/ci-go-action.yml@2026-03-11
         with:
             enable_shellcheck: true
 
     security-secrets:
-        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-03-09
+        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-03-11
 
     claude-review:
-        uses: arillso/.github/.github/workflows/ai-claude-review.yml@2026-03-09
+        uses: arillso/.github/.github/workflows/ai-claude-review.yml@2026-03-11
         if: github.event_name == 'pull_request' && github.event.action == 'opened'
         secrets:
             CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

@@ -12,6 +12,6 @@ permissions:
 
 jobs:
   cleanup:
-    uses: arillso/.github/.github/workflows/cleanup-container-registry.yml@2026-03-09
+    uses: arillso/.github/.github/workflows/cleanup-container-registry.yml@2026-03-11
     with:
       image_names: ansible
