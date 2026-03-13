@@ -17,7 +17,6 @@ rules:
         forbid-explicit-octal: true
 ignore: |
     .ansible/
-    .github/
     .venv/
     venv/
     .tox/
