@@ -1,6 +1,14 @@
 # Action: Play Ansible Playbook
 
-Github Action for running Ansible Playbooks.
+GitHub Action for running Ansible Playbooks with comprehensive configuration options for Galaxy, SSH, Vault, and privilege escalation.
+
+## Features
+
+- **Ansible Playbook Execution**: Run Ansible playbooks in GitHub Actions workflows
+- **Galaxy Integration**: Install roles and collections from Ansible Galaxy
+- **SSH Authentication**: Automatic SSH key normalization and authentication
+- **Vault Support**: Secure handling of Ansible Vault passwords
+- **Flexible Configuration**: Comprehensive options for inventory, tags, variables, and more
 
 ## Inputs
 
@@ -285,4 +293,4 @@ This project is under the MIT License. See the [LICENSE](LICENSE) file for the f
 
 ## Copyright
 
-(c) 2020, Arillso
+(c) 2020-2026, Arillso
