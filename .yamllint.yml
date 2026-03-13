@@ -22,4 +22,5 @@ ignore: |
     venv/
     .tox/
     __pycache__/
+    tests/
     *.tar.gz
