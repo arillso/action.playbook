@@ -14,7 +14,7 @@ lint-go: ## Run Go linter (golangci-lint)
 
 lint-yaml: ## Run YAML linter
 	@if command -v yamllint >/dev/null 2>&1; then \
-		yamllint -c .yamllint.yml .; \
+		if [ -f .yamllint.yml ]; then yamllint -c .yamllint.yml .; else yamllint .; fi; \
 	else \
 		echo "yamllint not found, skipping"; \
 	fi
@@ -34,11 +34,12 @@ test: ## Run Go tests
 
 action-test: build-docker ## Run action tests with test playbook
 	@docker run --rm \
-		-v $(shell pwd)/tests:/tests \
+		-v $(shell pwd):/github/workspace \
+		-w /github/workspace \
 		action-playbook:local \
-		--playbook /tests/basic_playbook.yml \
-		--inventory /tests/hosts.yml \
-		--galaxy-requirements /tests/requirements.yml
+		--playbook tests/basic_playbook.yml \
+		--inventory tests/hosts.yml \
+		--galaxy-requirements tests/requirements.yml
 
 ## Building
 build: ## Build Go binary
