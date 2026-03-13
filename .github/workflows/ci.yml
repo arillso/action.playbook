@@ -21,7 +21,10 @@ permissions:
 
 jobs:
     ci:
-        uses: arillso/.github/.github/workflows/ci-go-action.yml@2026-03-11
+        uses: arillso/.github/.github/workflows/ci-go.yml@2026-03-11
+
+    lint:
+        uses: arillso/.github/.github/workflows/ci-lint.yml@2026-03-11
         with:
             enable_shellcheck: true
 
