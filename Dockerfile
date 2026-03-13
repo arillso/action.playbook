@@ -1,7 +1,7 @@
 # -------------------------
 # Stage 1: Build Stage
 # -------------------------
-FROM golang:alpine@sha256:f4622e3bed9b03190609db905ac4b02bba2368ba7e62a6ad4ac6868d2818d314 AS builder
+FROM golang:1.26-alpine@sha256:2389ebfa5b7f43eeafbd6be0c3700cc46690ef842ad962f6c5bd6be49ed82039 AS builder
 # Use the official Golang Alpine image and assign this build stage the name "builder".
 
 # Set build environment variables for module support and cross-compilation.
