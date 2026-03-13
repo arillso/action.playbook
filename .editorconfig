@@ -27,7 +27,7 @@ max_line_length = 0             # No maximum line length
 # YAML Files
 ##########################################################################
 [*.{yml,yaml}]
-indent_size = 2                 # Use 2 spaces for YAML files
+indent_size = 4                 # Use 4 spaces for YAML files
 quote_type = double             # Use double quotes for YAML
 
 

@@ -1,14 +1,25 @@
 ---
 extends: default
 rules:
-    braces:
-        max-spaces-inside: 1
-    new-lines:
-        level: warning
-        type: unix
     line-length:
-        max: 500
-    comments:
-        min-spaces-from-content: 1
+        max: 160
+        level: warning
+    indentation:
+        spaces: 4
+        indent-sequences: true
     truthy:
-        allowed-values: ["true", "false", "on"]
+        allowed-values: ['true', 'false']
+        check-keys: false
+    document-start:
+        present: true
+    octal-values:
+        forbid-implicit-octal: true
+        forbid-explicit-octal: true
+ignore: |
+    .ansible/
+    .github/
+    .venv/
+    venv/
+    .tox/
+    __pycache__/
+    *.tar.gz

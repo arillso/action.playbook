@@ -1,0 +1,4 @@
+---
+scan:
+    skip-dirs:
+        - .ansible/
