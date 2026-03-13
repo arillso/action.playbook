@@ -335,9 +335,9 @@ func main() {
 				Sources: cli.EnvVars("ANSIBLE_SSH_TRANSFER_METHOD", "INPUT_SSH_TRANSFER_METHOD", "PLUGIN_SSH_TRANSFER_METHOD"),
 			},
 			&cli.StringFlag{
-				Name:    "module-name",
-				Usage:   "Name of the module to use",
-				Sources: cli.EnvVars("ANSIBLE_MODULE_NAME", "INPUT_MODULE_NAME", "PLUGIN_MODULE_NAME"),
+				Name:    "output-callback",
+				Usage:   "Set the stdout callback plugin for Ansible output",
+				Sources: cli.EnvVars("ANSIBLE_OUTPUT_CALLBACK", "INPUT_OUTPUT_CALLBACK", "PLUGIN_OUTPUT_CALLBACK"),
 			},
 			&cli.BoolFlag{
 				Name:    "no-color",
@@ -370,9 +370,13 @@ func main() {
 				Sources: cli.EnvVars("ANSIBLE_FACT_CACHING_TIMEOUT", "INPUT_FACT_CACHING_TIMEOUT", "PLUGIN_FACT_CACHING_TIMEOUT"),
 			},
 			&cli.StringFlag{
-				Name:    "callbacks-enabled",
-				Usage:   "Comma-separated list of enabled callback plugins",
-				Sources: cli.EnvVars("ANSIBLE_CALLBACKS_ENABLED", "INPUT_CALLBACKS_ENABLED", "PLUGIN_CALLBACKS_ENABLED"),
+				Name:  "callbacks-enabled",
+				Usage: "Comma-separated list of enabled callback plugins",
+				Sources: cli.EnvVars(
+					"ANSIBLE_CALLBACKS_ENABLED", "INPUT_CALLBACKS_ENABLED", "PLUGIN_CALLBACKS_ENABLED",
+					// deprecated aliases - remove in next major version
+					"ANSIBLE_CALLBACK_WHITELIST", "INPUT_CALLBACK_WHITELIST", "PLUGIN_CALLBACK_WHITELIST",
+				),
 			},
 			&cli.IntFlag{
 				Name:    "poll-interval",
@@ -534,7 +538,7 @@ func run(ctx context.Context, c *cli.Command) error {
 			FactPath:           c.String("fact-path"),
 			FactCaching:        c.String("fact-caching"),
 			FactCachingTimeout: c.Int("fact-caching-timeout"),
-			CallbacksEnabled:  c.String("callbacks-enabled"),
+			CallbacksEnabled:   c.String("callbacks-enabled"),
 			PollInterval:       c.Int("poll-interval"),
 			GatherSubset:       c.String("gather-subset"),
 			GatherTimeout:      c.Int("gather-timeout"),
@@ -548,4 +552,3 @@ func run(ctx context.Context, c *cli.Command) error {
 
 	return playbook.Exec(ctx)
 }
-
