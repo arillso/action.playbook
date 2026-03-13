@@ -1,24 +1,11 @@
+---
 name: Security Scanning
 
 on:
     push:
-        branches:
-            - main
-        paths:
-            - "Dockerfile"
-            - "go.mod"
-            - "go.sum"
-            - "main.go"
-            - ".github/workflows/security.yml"
+        branches: [main]
     pull_request:
-        branches:
-            - main
-        paths:
-            - "Dockerfile"
-            - "go.mod"
-            - "go.sum"
-            - "main.go"
-            - ".github/workflows/security.yml"
+        branches: [main]
     schedule:
         - cron: "0 2 * * 1"
 
@@ -37,6 +24,9 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
+    codeql:
+        uses: arillso/.github/.github/workflows/codeql-analysis.yml@2026-03-09
+
     prepare:
         runs-on: ubuntu-latest
         timeout-minutes: 5
