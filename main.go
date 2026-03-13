@@ -8,10 +8,9 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"time"
 
-	ansible "github.com/arillso/go.ansible"
+	ansible "github.com/arillso/go.ansible/v2"
 	"github.com/joho/godotenv"
 	cli "github.com/urfave/cli/v3"
 )
@@ -360,11 +359,6 @@ func main() {
 				Usage:   "Path to local fact files",
 				Sources: cli.EnvVars("ANSIBLE_FACT_PATH", "INPUT_FACT_PATH", "PLUGIN_FACT_PATH"),
 			},
-			&cli.BoolFlag{
-				Name:    "invalidate-cache",
-				Usage:   "Invalidate the fact cache",
-				Sources: cli.EnvVars("ANSIBLE_INVALIDATE_CACHE", "INPUT_INVALIDATE_CACHE", "PLUGIN_INVALIDATE_CACHE"),
-			},
 			&cli.StringFlag{
 				Name:    "fact-caching",
 				Usage:   "Caching method to use for facts",
@@ -376,9 +370,9 @@ func main() {
 				Sources: cli.EnvVars("ANSIBLE_FACT_CACHING_TIMEOUT", "INPUT_FACT_CACHING_TIMEOUT", "PLUGIN_FACT_CACHING_TIMEOUT"),
 			},
 			&cli.StringFlag{
-				Name:    "callback-whitelist",
-				Usage:   "Comma-separated list of allowed callback plugins",
-				Sources: cli.EnvVars("ANSIBLE_CALLBACK_WHITELIST", "INPUT_CALLBACK_WHITELIST", "PLUGIN_CALLBACK_WHITELIST"),
+				Name:    "callbacks-enabled",
+				Usage:   "Comma-separated list of enabled callback plugins",
+				Sources: cli.EnvVars("ANSIBLE_CALLBACKS_ENABLED", "INPUT_CALLBACKS_ENABLED", "PLUGIN_CALLBACKS_ENABLED"),
 			},
 			&cli.IntFlag{
 				Name:    "poll-interval",
@@ -411,24 +405,9 @@ func main() {
 				Sources: cli.EnvVars("ANSIBLE_ANY_ERRORS_FATAL", "INPUT_ANY_ERRORS_FATAL", "PLUGIN_ANY_ERRORS_FATAL"),
 			},
 			&cli.StringFlag{
-				Name:    "requirements",
-				Usage:   "Path to a file with additional dependency requirements",
-				Sources: cli.EnvVars("ANSIBLE_REQUIREMENTS", "INPUT_REQUIREMENTS", "PLUGIN_REQUIREMENTS"),
-			},
-			&cli.StringSliceFlag{
-				Name:    "module-default",
-				Usage:   "Set module default values in key=value format (can be specified multiple times)",
-				Sources: cli.EnvVars("ANSIBLE_MODULE_DEFAULT", "INPUT_MODULE_DEFAULT", "PLUGIN_MODULE_DEFAULT"),
-			},
-			&cli.StringFlag{
 				Name:    "config-file",
 				Usage:   "Path to the configuration file",
 				Sources: cli.EnvVars("ANSIBLE_CONFIG_FILE", "INPUT_CONFIG_FILE", "PLUGIN_CONFIG_FILE"),
-			},
-			&cli.StringFlag{
-				Name:    "metadata-export",
-				Usage:   "File path for exporting metadata",
-				Sources: cli.EnvVars("ANSIBLE_METADATA_EXPORT", "INPUT_METADATA_EXPORT", "PLUGIN_METADATA_EXPORT"),
 			},
 			&cli.StringFlag{
 				Name:    "temp-dir",
@@ -548,25 +527,21 @@ func run(ctx context.Context, c *cli.Command) error {
 			AskPass:            c.Bool("ask-pass"),
 			Step:               c.Bool("step"),
 			SSHTransferMethod:  c.String("ssh-transfer-method"),
-			ModuleName:         c.String("module-name"),
 			NoColor:            c.Bool("no-color"),
+			OutputCallback:     c.String("output-callback"),
 			VaultPasswordFile:  c.String("vault-password-file"),
 			AskVaultPass:       c.Bool("ask-vault-pass"),
 			FactPath:           c.String("fact-path"),
-			InvalidateCache:    c.Bool("invalidate-cache"),
 			FactCaching:        c.String("fact-caching"),
 			FactCachingTimeout: c.Int("fact-caching-timeout"),
-			CallbackWhitelist:  c.String("callback-whitelist"),
+			CallbacksEnabled:  c.String("callbacks-enabled"),
 			PollInterval:       c.Int("poll-interval"),
 			GatherSubset:       c.String("gather-subset"),
 			GatherTimeout:      c.Int("gather-timeout"),
 			StrategyPlugin:     c.String("strategy-plugin"),
 			MaxFailPercentage:  c.Int("max-fail-percentage"),
 			AnyErrorsFatal:     c.Bool("any-errors-fatal"),
-			Requirements:       c.String("requirements"),
-			ModuleDefaults:     parseModuleDefaults(c.StringSlice("module-default")),
 			ConfigFile:         c.String("config-file"),
-			MetadataExport:     c.String("metadata-export"),
 			TempDir:            c.String("temp-dir"),
 		},
 	}
@@ -574,16 +549,3 @@ func run(ctx context.Context, c *cli.Command) error {
 	return playbook.Exec(ctx)
 }
 
-// parseModuleDefaults converts key=value strings into a map for module defaults.
-func parseModuleDefaults(pairs []string) map[string]string {
-	moduleDefaults := make(map[string]string)
-	for _, pair := range pairs {
-		parts := strings.SplitN(pair, "=", 2)
-		if len(parts) == 2 {
-			key := strings.TrimSpace(parts[0])
-			value := strings.TrimSpace(parts[1])
-			moduleDefaults[key] = value
-		}
-	}
-	return moduleDefaults
-}
