@@ -447,17 +447,33 @@ func main() {
 	}
 }
 
+// normalizeSlice splits each element of a string slice on newlines and trims
+// whitespace, filtering out empty entries. This allows GitHub Actions multiline
+// inputs (using YAML |) to work alongside comma-separated values.
+func normalizeSlice(values []string) []string {
+	var result []string
+	for _, v := range values {
+		for _, line := range strings.Split(v, "\n") {
+			line = strings.TrimSpace(line)
+			if line != "" {
+				result = append(result, line)
+			}
+		}
+	}
+	return result
+}
+
 // validateParameters checks parameter integrity before execution.
 func validateParameters(c *cli.Command) error {
 	// Validate that required inventory files exist.
-	for _, inv := range c.StringSlice("inventory") {
+	for _, inv := range normalizeSlice(c.StringSlice("inventory")) {
 		if _, err := os.Stat(inv); os.IsNotExist(err) {
 			return fmt.Errorf("%w: inventory file does not exist: %s", ErrInvalidParameter, inv)
 		}
 	}
 
 	// Validate that required playbook files exist.
-	for _, pb := range c.StringSlice("playbook") {
+	for _, pb := range normalizeSlice(c.StringSlice("playbook")) {
 		if _, err := os.Stat(pb); os.IsNotExist(err) {
 			return fmt.Errorf("%w: playbook file does not exist: %s", ErrInvalidParameter, pb)
 		}
@@ -628,7 +644,13 @@ func run(ctx context.Context, c *cli.Command) error {
 		extraEnv["SSH_AUTH_SOCK"] = agent.sock
 	}
 
-	log.Printf("Starting Ansible playbook execution with %d playbooks", len(c.StringSlice("playbook")))
+	// Normalize slice flags to support both comma-separated and multiline inputs.
+	inventories := normalizeSlice(c.StringSlice("inventory"))
+	playbooks := normalizeSlice(c.StringSlice("playbook"))
+	extraVars := normalizeSlice(c.StringSlice("extra-vars"))
+	modulePath := normalizeSlice(c.StringSlice("module-path"))
+
+	log.Printf("Starting Ansible playbook execution with %d playbooks", len(playbooks))
 
 	playbook := &ansible.Playbook{
 		Config: ansible.Config{
@@ -653,14 +675,14 @@ func run(ctx context.Context, c *cli.Command) error {
 			GalaxyNoDeps:                      c.Bool("galaxy-no-deps"),
 
 			// Inventory and playbook configuration.
-			Inventories:   c.StringSlice("inventory"),
-			Playbooks:     c.StringSlice("playbook"),
+			Inventories:   inventories,
+			Playbooks:     playbooks,
 			Limit:         c.String("limit"),
 			SkipTags:      c.String("skip-tags"),
 			StartAtTask:   c.String("start-at-task"),
 			Tags:          c.String("tags"),
-			ExtraVars:     c.StringSlice("extra-vars"),
-			ModulePath:    c.StringSlice("module-path"),
+			ExtraVars:     extraVars,
+			ModulePath:    modulePath,
 			Check:         c.Bool("check"),
 			Diff:          c.Bool("diff"),
 			FlushCache:    c.Bool("flush-cache"),

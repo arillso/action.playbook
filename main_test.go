@@ -232,6 +232,85 @@ func TestValidateParameters_ErrorWrapping(t *testing.T) {
 	}
 }
 
+func TestNormalizeSlice(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []string
+		expected []string
+	}{
+		{
+			name:     "single value",
+			input:    []string{"inv.yml"},
+			expected: []string{"inv.yml"},
+		},
+		{
+			name:     "comma-separated already split by cli",
+			input:    []string{"inv1.yml", "inv2.yml"},
+			expected: []string{"inv1.yml", "inv2.yml"},
+		},
+		{
+			name:     "newline-separated from multiline YAML",
+			input:    []string{"inv1.yml\ninv2.yml"},
+			expected: []string{"inv1.yml", "inv2.yml"},
+		},
+		{
+			name:     "newline with trailing newline",
+			input:    []string{"inv1.yml\ninv2.yml\n"},
+			expected: []string{"inv1.yml", "inv2.yml"},
+		},
+		{
+			name:     "mixed whitespace and empty lines",
+			input:    []string{"  inv1.yml \n\n  inv2.yml  \n"},
+			expected: []string{"inv1.yml", "inv2.yml"},
+		},
+		{
+			name:     "CRLF line endings",
+			input:    []string{"inv1.yml\r\ninv2.yml\r\n"},
+			expected: []string{"inv1.yml", "inv2.yml"},
+		},
+		{
+			name:     "empty input",
+			input:    []string{},
+			expected: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := normalizeSlice(tt.input)
+			if len(result) != len(tt.expected) {
+				t.Fatalf("expected %d elements, got %d: %v", len(tt.expected), len(result), result)
+			}
+			for i, v := range result {
+				if v != tt.expected[i] {
+					t.Errorf("element %d: expected %q, got %q", i, tt.expected[i], v)
+				}
+			}
+		})
+	}
+}
+
+func TestValidateParameters_MultilineInventory(t *testing.T) {
+	tmpDir := t.TempDir()
+	pbPath := createTempFile(t, tmpDir, "playbook.yml", "---\n- hosts: all\n")
+	inv1 := createTempFile(t, tmpDir, "inventory1.yml", "all:\n  hosts:\n    localhost:\n")
+	inv2 := createTempFile(t, tmpDir, "inventory2.yml", "all:\n  hosts:\n    localhost:\n")
+
+	cmd := newTestCommand(func(ctx context.Context, c *cli.Command) error {
+		return validateParameters(c)
+	})
+
+	// Simulate multiline YAML input: newline-separated value in a single string.
+	err := cmd.Run(context.Background(), []string{
+		"test",
+		"--playbook", pbPath,
+		"--inventory", inv1 + "\n" + inv2,
+	})
+	if err != nil {
+		t.Errorf("expected no error for newline-separated inventories, got: %v", err)
+	}
+}
+
 func TestStartSSHAgent_ValidKey(t *testing.T) {
 	if _, err := exec.LookPath("ssh-agent"); err != nil {
 		t.Skip("ssh-agent not available")
