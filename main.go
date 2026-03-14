@@ -423,6 +423,11 @@ func main() {
 	}
 
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
+		var ansibleErr *ansible.AnsibleError
+		if errors.As(err, &ansibleErr) {
+			log.Printf("Error: %v", err)
+			os.Exit(ansibleErr.ExitCode)
+		}
 		log.Fatalf("Error: %v", err)
 	}
 }
