@@ -4,232 +4,17 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	cli "github.com/urfave/cli/v3"
 )
 
-// newTestCommand creates a CLI command with the same flags as the real app for testing.
+// newTestCommand creates a CLI command reusing appFlags from main.go for testing.
 func newTestCommand(action cli.ActionFunc) *cli.Command {
 	return &cli.Command{
-		Name: "test",
-		Flags: []cli.Flag{
-			&cli.IntFlag{
-				Name:  "execution-timeout",
-				Value: 30,
-			},
-			&cli.StringFlag{
-				Name: "galaxy-file",
-			},
-			&cli.BoolFlag{
-				Name: "galaxy-force",
-			},
-			&cli.StringFlag{
-				Name: "galaxy-api-key",
-			},
-			&cli.StringFlag{
-				Name: "galaxy-api-server-url",
-			},
-			&cli.StringFlag{
-				Name: "galaxy-collections-path",
-			},
-			&cli.BoolFlag{
-				Name: "galaxy-disable-gpg-verify",
-			},
-			&cli.BoolFlag{
-				Name: "galaxy-force-with-deps",
-			},
-			&cli.BoolFlag{
-				Name: "galaxy-ignore-certs",
-			},
-			&cli.StringSliceFlag{
-				Name: "galaxy-ignore-signature-status-codes",
-			},
-			&cli.StringFlag{
-				Name: "galaxy-keyring",
-			},
-			&cli.BoolFlag{
-				Name: "galaxy-offline",
-			},
-			&cli.BoolFlag{
-				Name: "galaxy-pre",
-			},
-			&cli.IntFlag{
-				Name: "galaxy-required-valid-signature-count",
-			},
-			&cli.StringFlag{
-				Name: "galaxy-requirements-file",
-			},
-			&cli.StringFlag{
-				Name: "galaxy-signature",
-			},
-			&cli.IntFlag{
-				Name: "galaxy-timeout",
-			},
-			&cli.BoolFlag{
-				Name: "galaxy-upgrade",
-			},
-			&cli.BoolFlag{
-				Name: "galaxy-no-deps",
-			},
-			&cli.StringSliceFlag{
-				Name: "inventory",
-			},
-			&cli.StringSliceFlag{
-				Name: "playbook",
-			},
-			&cli.StringFlag{
-				Name: "limit",
-			},
-			&cli.StringFlag{
-				Name: "skip-tags",
-			},
-			&cli.StringFlag{
-				Name: "start-at-task",
-			},
-			&cli.StringFlag{
-				Name: "tags",
-			},
-			&cli.StringSliceFlag{
-				Name: "extra-vars",
-			},
-			&cli.StringSliceFlag{
-				Name: "module-path",
-			},
-			&cli.BoolFlag{
-				Name: "check",
-			},
-			&cli.BoolFlag{
-				Name: "diff",
-			},
-			&cli.BoolFlag{
-				Name: "flush-cache",
-			},
-			&cli.BoolFlag{
-				Name: "force-handlers",
-			},
-			&cli.BoolFlag{
-				Name: "list-hosts",
-			},
-			&cli.BoolFlag{
-				Name: "list-tags",
-			},
-			&cli.BoolFlag{
-				Name: "list-tasks",
-			},
-			&cli.BoolFlag{
-				Name: "syntax-check",
-			},
-			&cli.IntFlag{
-				Name:  "forks",
-				Value: 5,
-			},
-			&cli.StringFlag{
-				Name: "vault-id",
-			},
-			&cli.StringFlag{
-				Name: "vault-password",
-			},
-			&cli.IntFlag{
-				Name: "verbose",
-			},
-			&cli.StringFlag{
-				Name: "private-key",
-			},
-			&cli.StringFlag{
-				Name: "private-key-file",
-			},
-			&cli.StringFlag{
-				Name: "user",
-			},
-			&cli.StringFlag{
-				Name: "connection",
-			},
-			&cli.IntFlag{
-				Name: "timeout",
-			},
-			&cli.StringFlag{
-				Name: "ssh-common-args",
-			},
-			&cli.StringFlag{
-				Name: "sftp-extra-args",
-			},
-			&cli.StringFlag{
-				Name: "scp-extra-args",
-			},
-			&cli.StringFlag{
-				Name: "ssh-extra-args",
-			},
-			&cli.BoolFlag{
-				Name: "become",
-			},
-			&cli.StringFlag{
-				Name: "become-method",
-			},
-			&cli.StringFlag{
-				Name: "become-user",
-			},
-			&cli.BoolFlag{
-				Name: "ask-become-pass",
-			},
-			&cli.BoolFlag{
-				Name: "ask-pass",
-			},
-			&cli.BoolFlag{
-				Name: "step",
-			},
-			&cli.StringFlag{
-				Name: "ssh-transfer-method",
-			},
-			&cli.StringFlag{
-				Name: "output-callback",
-			},
-			&cli.BoolFlag{
-				Name: "no-color",
-			},
-			&cli.StringFlag{
-				Name: "vault-password-file",
-			},
-			&cli.BoolFlag{
-				Name: "ask-vault-pass",
-			},
-			&cli.StringFlag{
-				Name: "fact-path",
-			},
-			&cli.StringFlag{
-				Name: "fact-caching",
-			},
-			&cli.IntFlag{
-				Name: "fact-caching-timeout",
-			},
-			&cli.StringFlag{
-				Name: "callbacks-enabled",
-			},
-			&cli.IntFlag{
-				Name: "poll-interval",
-			},
-			&cli.StringFlag{
-				Name: "gather-subset",
-			},
-			&cli.IntFlag{
-				Name: "gather-timeout",
-			},
-			&cli.StringFlag{
-				Name: "strategy-plugin",
-			},
-			&cli.IntFlag{
-				Name: "max-fail-percentage",
-			},
-			&cli.BoolFlag{
-				Name: "any-errors-fatal",
-			},
-			&cli.StringFlag{
-				Name: "config-file",
-			},
-			&cli.StringFlag{
-				Name: "temp-dir",
-			},
-		},
+		Name:   "test",
+		Flags:  appFlags,
 		Action: action,
 	}
 }
@@ -438,32 +223,10 @@ func TestValidateParameters_ErrorWrapping(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 
-	// Verify error wraps ErrInvalidParameter
-	if !errorContains(err, "invalid parameter provided") {
+	if !strings.Contains(err.Error(), "invalid parameter provided") {
 		t.Errorf("expected error to contain ErrInvalidParameter message, got: %v", err)
 	}
-	if !errorContains(err, "playbook file does not exist") {
+	if !strings.Contains(err.Error(), "playbook file does not exist") {
 		t.Errorf("expected error to mention playbook file, got: %v", err)
 	}
-}
-
-// errorContains checks if an error message contains the given substring.
-func errorContains(err error, substr string) bool {
-	if err == nil {
-		return false
-	}
-	return contains(err.Error(), substr)
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && searchString(s, substr)
-}
-
-func searchString(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

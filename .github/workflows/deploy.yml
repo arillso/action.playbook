@@ -67,7 +67,7 @@ jobs:
                   VERSION_CLEAN="${VERSION#v}"
                   MAJOR_MINOR="${VERSION_CLEAN%.*}"
 
-                  ACTION_IMAGE=$(grep 'image:' action.yml | sed 's/.*action\.playbook://' | tr -d '"' | tr -d ' ')
+                  ACTION_IMAGE=$(grep '^\s*image:' action.yml | sed 's/.*action\.playbook://' | tr -d '"' | tr -d ' ')
 
                   if [[ "${ACTION_IMAGE}" != "${MAJOR_MINOR}" ]]; then
                     echo "::error::action.yml image tag '${ACTION_IMAGE}' does not match release major.minor '${MAJOR_MINOR}'"
