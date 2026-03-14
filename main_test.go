@@ -230,3 +230,164 @@ func TestValidateParameters_ErrorWrapping(t *testing.T) {
 		t.Errorf("expected error to mention playbook file, got: %v", err)
 	}
 }
+
+func TestStartSSHAgent_ValidKey(t *testing.T) {
+	if _, err := exec.LookPath("ssh-agent"); err != nil {
+		t.Skip("ssh-agent not available")
+	}
+	if _, err := exec.LookPath("ssh-keygen"); err != nil {
+		t.Skip("ssh-keygen not available")
+	}
+
+	// Generate a test RSA key.
+	keyFile := filepath.Join(t.TempDir(), "test_key")
+	cmd := exec.Command("ssh-keygen", "-t", "rsa", "-b", "2048", "-f", keyFile, "-N", "", "-q")
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("failed to generate test key: %v", err)
+	}
+	keyContent, err := os.ReadFile(keyFile)
+	if err != nil {
+		t.Fatalf("failed to read test key: %v", err)
+	}
+
+	agent, err := startSSHAgent(string(keyContent), "")
+	if err != nil {
+		t.Fatalf("startSSHAgent failed: %v", err)
+	}
+	defer agent.stop()
+
+	if agent.sock == "" {
+		t.Error("expected SSH_AUTH_SOCK to be set")
+	}
+	if agent.pid == "" {
+		t.Error("expected SSH_AGENT_PID to be set")
+	}
+
+	// Verify the key was added by listing keys.
+	listCmd := exec.Command("ssh-add", "-l")
+	listCmd.Env = append(os.Environ(), "SSH_AUTH_SOCK="+agent.sock)
+	out, err := listCmd.Output()
+	if err != nil {
+		t.Fatalf("ssh-add -l failed: %v", err)
+	}
+	if !strings.Contains(string(out), "2048") {
+		t.Errorf("expected key to be listed in agent, got: %s", string(out))
+	}
+}
+
+func TestStartSSHAgent_InvalidKey(t *testing.T) {
+	if _, err := exec.LookPath("ssh-agent"); err != nil {
+		t.Skip("ssh-agent not available")
+	}
+
+	_, err := startSSHAgent("not-a-valid-key", "")
+	if err == nil {
+		t.Error("expected error for invalid key, got nil")
+	}
+}
+
+func TestStartSSHAgent_CRLFKey(t *testing.T) {
+	if _, err := exec.LookPath("ssh-agent"); err != nil {
+		t.Skip("ssh-agent not available")
+	}
+	if _, err := exec.LookPath("ssh-keygen"); err != nil {
+		t.Skip("ssh-keygen not available")
+	}
+
+	// Generate a test key and convert to CRLF.
+	keyFile := filepath.Join(t.TempDir(), "test_key")
+	cmd := exec.Command("ssh-keygen", "-t", "rsa", "-b", "2048", "-f", keyFile, "-N", "", "-q")
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("failed to generate test key: %v", err)
+	}
+	keyContent, err := os.ReadFile(keyFile)
+	if err != nil {
+		t.Fatalf("failed to read test key: %v", err)
+	}
+
+	// Convert LF to CRLF.
+	crlfKey := strings.ReplaceAll(string(keyContent), "\n", "\r\n")
+
+	agent, err := startSSHAgent(crlfKey, "")
+	if err != nil {
+		t.Fatalf("startSSHAgent with CRLF key failed: %v", err)
+	}
+	defer agent.stop()
+
+	if agent.sock == "" {
+		t.Error("expected SSH_AUTH_SOCK to be set")
+	}
+}
+
+func TestStartSSHAgent_PassphraseKey(t *testing.T) {
+	if _, err := exec.LookPath("ssh-agent"); err != nil {
+		t.Skip("ssh-agent not available")
+	}
+	if _, err := exec.LookPath("ssh-keygen"); err != nil {
+		t.Skip("ssh-keygen not available")
+	}
+
+	// Generate a passphrase-protected RSA key.
+	passphrase := "test-passphrase-123"
+	keyFile := filepath.Join(t.TempDir(), "test_key")
+	cmd := exec.Command("ssh-keygen", "-t", "rsa", "-b", "2048", "-f", keyFile, "-N", passphrase, "-q")
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("failed to generate test key: %v", err)
+	}
+	keyContent, err := os.ReadFile(keyFile)
+	if err != nil {
+		t.Fatalf("failed to read test key: %v", err)
+	}
+
+	agent, err := startSSHAgent(string(keyContent), passphrase)
+	if err != nil {
+		t.Fatalf("startSSHAgent with passphrase failed: %v", err)
+	}
+	defer agent.stop()
+
+	if agent.sock == "" {
+		t.Error("expected SSH_AUTH_SOCK to be set")
+	}
+
+	// Verify the key was added by listing keys.
+	listCmd := exec.Command("ssh-add", "-l")
+	listCmd.Env = append(os.Environ(), "SSH_AUTH_SOCK="+agent.sock)
+	out, err := listCmd.Output()
+	if err != nil {
+		t.Fatalf("ssh-add -l failed: %v", err)
+	}
+	if !strings.Contains(string(out), "2048") {
+		t.Errorf("expected key to be listed in agent, got: %s", string(out))
+	}
+}
+
+func TestStartSSHAgent_WrongPassphrase(t *testing.T) {
+	if _, err := exec.LookPath("ssh-agent"); err != nil {
+		t.Skip("ssh-agent not available")
+	}
+	if _, err := exec.LookPath("ssh-keygen"); err != nil {
+		t.Skip("ssh-keygen not available")
+	}
+
+	// Generate a passphrase-protected key.
+	keyFile := filepath.Join(t.TempDir(), "test_key")
+	cmd := exec.Command("ssh-keygen", "-t", "rsa", "-b", "2048", "-f", keyFile, "-N", "correct-passphrase", "-q")
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("failed to generate test key: %v", err)
+	}
+	keyContent, err := os.ReadFile(keyFile)
+	if err != nil {
+		t.Fatalf("failed to read test key: %v", err)
+	}
+
+	_, err = startSSHAgent(string(keyContent), "wrong-passphrase")
+	if err == nil {
+		t.Error("expected error for wrong passphrase, got nil")
+	}
+}
+
+func TestSSHAgentStop_Nil(t *testing.T) {
+	// Calling stop on nil should not panic.
+	var agent *sshAgent
+	agent.stop()
+}
