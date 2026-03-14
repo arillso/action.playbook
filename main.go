@@ -463,24 +463,23 @@ func normalizeSlice(values []string) []string {
 	return result
 }
 
-// validateParameters checks parameter integrity before execution.
-func validateParameters(c *cli.Command) error {
-	// Validate that required inventory files exist.
-	for _, inv := range normalizeSlice(c.StringSlice("inventory")) {
+// validateParameters checks that the given inventory files, playbook files,
+// and galaxy file (if any) exist on disk. Callers should pass already-normalized
+// slices so that normalization happens exactly once.
+func validateParameters(inventories, playbooks []string, galaxyFile string) error {
+	for _, inv := range inventories {
 		if _, err := os.Stat(inv); os.IsNotExist(err) {
 			return fmt.Errorf("%w: inventory file does not exist: %s", ErrInvalidParameter, inv)
 		}
 	}
 
-	// Validate that required playbook files exist.
-	for _, pb := range normalizeSlice(c.StringSlice("playbook")) {
+	for _, pb := range playbooks {
 		if _, err := os.Stat(pb); os.IsNotExist(err) {
 			return fmt.Errorf("%w: playbook file does not exist: %s", ErrInvalidParameter, pb)
 		}
 	}
 
-	// Validate Galaxy file if specified.
-	if galaxyFile := c.String("galaxy-file"); galaxyFile != "" {
+	if galaxyFile != "" {
 		if _, err := os.Stat(galaxyFile); os.IsNotExist(err) {
 			return fmt.Errorf("%w: galaxy file does not exist: %s", ErrInvalidParameter, galaxyFile)
 		}
@@ -619,8 +618,14 @@ func (a *sshAgent) stop() {
 
 // run is the main action for executing the playbooks.
 func run(ctx context.Context, c *cli.Command) error {
-	// Validate parameters.
-	if err := validateParameters(c); err != nil {
+	// Normalize slice flags once to support both comma-separated and multiline inputs.
+	inventories := normalizeSlice(c.StringSlice("inventory"))
+	playbooks := normalizeSlice(c.StringSlice("playbook"))
+	extraVars := normalizeSlice(c.StringSlice("extra-vars"))
+	modulePath := normalizeSlice(c.StringSlice("module-path"))
+
+	// Validate parameters using the already-normalized slices.
+	if err := validateParameters(inventories, playbooks, c.String("galaxy-file")); err != nil {
 		return err
 	}
 
@@ -643,12 +648,6 @@ func run(ctx context.Context, c *cli.Command) error {
 		defer agent.stop()
 		extraEnv["SSH_AUTH_SOCK"] = agent.sock
 	}
-
-	// Normalize slice flags to support both comma-separated and multiline inputs.
-	inventories := normalizeSlice(c.StringSlice("inventory"))
-	playbooks := normalizeSlice(c.StringSlice("playbook"))
-	extraVars := normalizeSlice(c.StringSlice("extra-vars"))
-	modulePath := normalizeSlice(c.StringSlice("module-path"))
 
 	log.Printf("Starting Ansible playbook execution with %d playbooks", len(playbooks))
 

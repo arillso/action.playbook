@@ -36,7 +36,11 @@ func TestValidateParameters_ValidFiles(t *testing.T) {
 	invPath := createTempFile(t, tmpDir, "inventory.yml", "all:\n  hosts:\n    localhost:\n")
 
 	cmd := newTestCommand(func(ctx context.Context, c *cli.Command) error {
-		return validateParameters(c)
+		return validateParameters(
+			normalizeSlice(c.StringSlice("inventory")),
+			normalizeSlice(c.StringSlice("playbook")),
+			c.String("galaxy-file"),
+		)
 	})
 
 	err := cmd.Run(context.Background(), []string{
@@ -54,7 +58,11 @@ func TestValidateParameters_MissingPlaybook(t *testing.T) {
 	invPath := createTempFile(t, tmpDir, "inventory.yml", "all:\n  hosts:\n    localhost:\n")
 
 	cmd := newTestCommand(func(ctx context.Context, c *cli.Command) error {
-		return validateParameters(c)
+		return validateParameters(
+			normalizeSlice(c.StringSlice("inventory")),
+			normalizeSlice(c.StringSlice("playbook")),
+			c.String("galaxy-file"),
+		)
 	})
 
 	err := cmd.Run(context.Background(), []string{
@@ -72,7 +80,11 @@ func TestValidateParameters_MissingInventory(t *testing.T) {
 	pbPath := createTempFile(t, tmpDir, "playbook.yml", "---\n- hosts: all\n")
 
 	cmd := newTestCommand(func(ctx context.Context, c *cli.Command) error {
-		return validateParameters(c)
+		return validateParameters(
+			normalizeSlice(c.StringSlice("inventory")),
+			normalizeSlice(c.StringSlice("playbook")),
+			c.String("galaxy-file"),
+		)
 	})
 
 	err := cmd.Run(context.Background(), []string{
@@ -91,7 +103,11 @@ func TestValidateParameters_MissingGalaxyFile(t *testing.T) {
 	invPath := createTempFile(t, tmpDir, "inventory.yml", "all:\n  hosts:\n    localhost:\n")
 
 	cmd := newTestCommand(func(ctx context.Context, c *cli.Command) error {
-		return validateParameters(c)
+		return validateParameters(
+			normalizeSlice(c.StringSlice("inventory")),
+			normalizeSlice(c.StringSlice("playbook")),
+			c.String("galaxy-file"),
+		)
 	})
 
 	err := cmd.Run(context.Background(), []string{
@@ -112,7 +128,11 @@ func TestValidateParameters_ValidGalaxyFile(t *testing.T) {
 	galaxyPath := createTempFile(t, tmpDir, "requirements.yml", "---\nroles: []\n")
 
 	cmd := newTestCommand(func(ctx context.Context, c *cli.Command) error {
-		return validateParameters(c)
+		return validateParameters(
+			normalizeSlice(c.StringSlice("inventory")),
+			normalizeSlice(c.StringSlice("playbook")),
+			c.String("galaxy-file"),
+		)
 	})
 
 	err := cmd.Run(context.Background(), []string{
@@ -132,7 +152,11 @@ func TestValidateParameters_NoGalaxyFile(t *testing.T) {
 	invPath := createTempFile(t, tmpDir, "inventory.yml", "all:\n  hosts:\n    localhost:\n")
 
 	cmd := newTestCommand(func(ctx context.Context, c *cli.Command) error {
-		return validateParameters(c)
+		return validateParameters(
+			normalizeSlice(c.StringSlice("inventory")),
+			normalizeSlice(c.StringSlice("playbook")),
+			c.String("galaxy-file"),
+		)
 	})
 
 	err := cmd.Run(context.Background(), []string{
@@ -152,7 +176,11 @@ func TestValidateParameters_MultiplePlaybooks(t *testing.T) {
 	invPath := createTempFile(t, tmpDir, "inventory.yml", "all:\n  hosts:\n    localhost:\n")
 
 	cmd := newTestCommand(func(ctx context.Context, c *cli.Command) error {
-		return validateParameters(c)
+		return validateParameters(
+			normalizeSlice(c.StringSlice("inventory")),
+			normalizeSlice(c.StringSlice("playbook")),
+			c.String("galaxy-file"),
+		)
 	})
 
 	err := cmd.Run(context.Background(), []string{
@@ -172,7 +200,11 @@ func TestValidateParameters_MultiplePlaybooksOneMissing(t *testing.T) {
 	invPath := createTempFile(t, tmpDir, "inventory.yml", "all:\n  hosts:\n    localhost:\n")
 
 	cmd := newTestCommand(func(ctx context.Context, c *cli.Command) error {
-		return validateParameters(c)
+		return validateParameters(
+			normalizeSlice(c.StringSlice("inventory")),
+			normalizeSlice(c.StringSlice("playbook")),
+			c.String("galaxy-file"),
+		)
 	})
 
 	err := cmd.Run(context.Background(), []string{
@@ -193,7 +225,11 @@ func TestValidateParameters_MultipleInventories(t *testing.T) {
 	inv2 := createTempFile(t, tmpDir, "inventory2.yml", "all:\n  hosts:\n    localhost:\n")
 
 	cmd := newTestCommand(func(ctx context.Context, c *cli.Command) error {
-		return validateParameters(c)
+		return validateParameters(
+			normalizeSlice(c.StringSlice("inventory")),
+			normalizeSlice(c.StringSlice("playbook")),
+			c.String("galaxy-file"),
+		)
 	})
 
 	err := cmd.Run(context.Background(), []string{
@@ -212,7 +248,11 @@ func TestValidateParameters_ErrorWrapping(t *testing.T) {
 	invPath := createTempFile(t, tmpDir, "inventory.yml", "all:\n  hosts:\n    localhost:\n")
 
 	cmd := newTestCommand(func(ctx context.Context, c *cli.Command) error {
-		return validateParameters(c)
+		return validateParameters(
+			normalizeSlice(c.StringSlice("inventory")),
+			normalizeSlice(c.StringSlice("playbook")),
+			c.String("galaxy-file"),
+		)
 	})
 
 	err := cmd.Run(context.Background(), []string{
@@ -297,7 +337,11 @@ func TestValidateParameters_MultilineInventory(t *testing.T) {
 	inv2 := createTempFile(t, tmpDir, "inventory2.yml", "all:\n  hosts:\n    localhost:\n")
 
 	cmd := newTestCommand(func(ctx context.Context, c *cli.Command) error {
-		return validateParameters(c)
+		return validateParameters(
+			normalizeSlice(c.StringSlice("inventory")),
+			normalizeSlice(c.StringSlice("playbook")),
+			c.String("galaxy-file"),
+		)
 	})
 
 	// Simulate multiline YAML input: newline-separated value in a single string.
