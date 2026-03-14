@@ -23,7 +23,7 @@ RUN go mod download
 COPY . .
 
 # Build the application binary and output it as "main".
-RUN go build -o main .
+RUN go build -ldflags="-s -w" -o main .
 
 # -------------------------
 # Stage 2: Production Stage (Alpine Linux)

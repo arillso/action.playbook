@@ -61,6 +61,23 @@ jobs:
 
                   echo "Publishing version: ${VERSION}"
 
+            - name: Verify action.yml image version matches release tag
+              run: |
+                  VERSION="${{ steps.version.outputs.version }}"
+                  VERSION_CLEAN="${VERSION#v}"
+                  MAJOR_MINOR="${VERSION_CLEAN%.*}"
+
+                  ACTION_IMAGE=$(grep '^\s*image:' action.yml | sed 's/.*action\.playbook://' | tr -d '"' | tr -d ' ')
+
+                  if [[ "${ACTION_IMAGE}" != "${MAJOR_MINOR}" ]]; then
+                    echo "::error::action.yml image tag '${ACTION_IMAGE}' does not match release major.minor '${MAJOR_MINOR}'"
+                    echo "Expected: docker://ghcr.io/arillso/action.playbook:${MAJOR_MINOR}"
+                    echo "Found:    docker://ghcr.io/arillso/action.playbook:${ACTION_IMAGE}"
+                    exit 1
+                  fi
+
+                  echo "action.yml image version '${ACTION_IMAGE}' matches release '${MAJOR_MINOR}'"
+
     build-and-push-image:
         runs-on: ubuntu-latest
         needs: prepare
