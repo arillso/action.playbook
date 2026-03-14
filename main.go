@@ -3,11 +3,15 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
+	"strings"
+	"syscall"
 	"time"
 
 	ansible "github.com/arillso/go.ansible/v2"
@@ -244,6 +248,11 @@ var appFlags = []cli.Flag{
 		Sources: cli.EnvVars("ANSIBLE_PRIVATE_KEY", "INPUT_PRIVATE_KEY", "PLUGIN_PRIVATE_KEY"),
 	},
 	&cli.StringFlag{
+		Name:    "private-key-passphrase",
+		Usage:   "Passphrase for the SSH private key (used with ssh-agent)",
+		Sources: cli.EnvVars("ANSIBLE_PRIVATE_KEY_PASSPHRASE", "INPUT_PRIVATE_KEY_PASSPHRASE", "PLUGIN_PRIVATE_KEY_PASSPHRASE"),
+	},
+	&cli.StringFlag{
 		Name:    "private-key-file",
 		Usage:   "Path to the file containing the SSH private key",
 		Sources: cli.EnvVars("ANSIBLE_PRIVATE_KEY_FILE", "INPUT_PRIVATE_KEY_FILE", "PLUGIN_PRIVATE_KEY_FILE"),
@@ -464,6 +473,134 @@ func validateParameters(c *cli.Command) error {
 	return nil
 }
 
+// sshAgent holds the state of a running ssh-agent process.
+type sshAgent struct {
+	sock string
+	pid  string
+}
+
+// startSSHAgent starts an ssh-agent, adds the given private key, and returns
+// the agent state for cleanup. The key content is written to a temporary file
+// which is removed immediately after being added to the agent.
+func startSSHAgent(privateKey, passphrase string) (*sshAgent, error) {
+	// Start ssh-agent and capture its output.
+	var buf bytes.Buffer
+	agentCmd := exec.Command("ssh-agent", "-s")
+	agentCmd.Stdout = &buf
+	if err := agentCmd.Run(); err != nil {
+		return nil, fmt.Errorf("failed to start ssh-agent: %w", err)
+	}
+
+	// Parse SSH_AUTH_SOCK and SSH_AGENT_PID from agent output.
+	output := buf.String()
+	agent := &sshAgent{}
+	for _, line := range strings.Split(output, "\n") {
+		if strings.HasPrefix(line, "SSH_AUTH_SOCK=") {
+			agent.sock = strings.SplitN(strings.TrimPrefix(line, "SSH_AUTH_SOCK="), ";", 2)[0]
+		}
+		if strings.HasPrefix(line, "SSH_AGENT_PID=") {
+			agent.pid = strings.SplitN(strings.TrimPrefix(line, "SSH_AGENT_PID="), ";", 2)[0]
+		}
+	}
+
+	if agent.sock == "" {
+		return nil, fmt.Errorf("failed to parse SSH_AUTH_SOCK from ssh-agent output")
+	}
+
+	// Write private key to a temporary file for ssh-add.
+	tmpFile, err := os.CreateTemp("", "ssh-agent-key-")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp key file: %w", err)
+	}
+	keyPath := tmpFile.Name()
+
+	// Normalize line endings and ensure trailing newline.
+	normalized := strings.ReplaceAll(privateKey, "\r\n", "\n")
+	if !strings.HasSuffix(normalized, "\n") {
+		normalized += "\n"
+	}
+
+	if _, err := tmpFile.WriteString(normalized); err != nil {
+		_ = tmpFile.Close()
+		_ = os.Remove(keyPath)
+		return nil, fmt.Errorf("failed to write temp key file: %w", err)
+	}
+	if err := tmpFile.Close(); err != nil {
+		_ = os.Remove(keyPath)
+		return nil, fmt.Errorf("failed to close temp key file: %w", err)
+	}
+
+	// Add the key to the agent.
+	addCtx, addCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer addCancel()
+	addCmd := exec.CommandContext(addCtx, "ssh-add", keyPath)
+	addCmd.Env = append(os.Environ(), "SSH_AUTH_SOCK="+agent.sock)
+
+	// If a passphrase is provided, use SSH_ASKPASS to supply it non-interactively.
+	if passphrase != "" {
+		askpassScript, err := os.CreateTemp("", "ssh-askpass-")
+		if err != nil {
+			_ = os.Remove(keyPath)
+			return nil, fmt.Errorf("failed to create askpass script: %w", err)
+		}
+		askpassPath := askpassScript.Name()
+		// The script outputs the passphrase once, then exits with error on retries
+		// to prevent ssh-add from looping indefinitely on wrong passphrases.
+		flagFile := askpassPath + ".used"
+		scriptContent := fmt.Sprintf("#!/bin/sh\nif [ -f '%s' ]; then exit 1; fi\ntouch '%s'\necho '%s'\n",
+			flagFile, flagFile, strings.ReplaceAll(passphrase, "'", "'\\''"))
+		if _, err := askpassScript.WriteString(scriptContent); err != nil {
+			_ = askpassScript.Close()
+			_ = os.Remove(askpassPath)
+			_ = os.Remove(keyPath)
+			return nil, fmt.Errorf("failed to write askpass script: %w", err)
+		}
+		_ = askpassScript.Close()
+		if err := os.Chmod(askpassPath, 0700); err != nil {
+			_ = os.Remove(askpassPath)
+			_ = os.Remove(keyPath)
+			return nil, fmt.Errorf("failed to set askpass script permissions: %w", err)
+		}
+		addCmd.Env = append(addCmd.Env,
+			"SSH_ASKPASS="+askpassPath,
+			"SSH_ASKPASS_REQUIRE=force",
+			"DISPLAY=",
+		)
+		// Detach from controlling TTY so ssh-add uses SSH_ASKPASS.
+		addCmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
+		addCmd.Stdin = nil
+		defer func() {
+			_ = os.Remove(askpassPath)
+			_ = os.Remove(flagFile)
+		}()
+	}
+
+	if out, err := addCmd.CombinedOutput(); err != nil {
+		_ = os.Remove(keyPath)
+		return nil, fmt.Errorf("failed to add key to ssh-agent: %w: %s", err, string(out))
+	}
+
+	// Remove the temporary key file immediately after adding to agent.
+	_ = os.Remove(keyPath)
+
+	log.Printf("SSH agent started and key added (PID: %s)", agent.pid)
+	return agent, nil
+}
+
+// stop kills the ssh-agent process.
+func (a *sshAgent) stop() {
+	if a == nil || a.pid == "" {
+		return
+	}
+	killCmd := exec.Command("ssh-agent", "-k")
+	killCmd.Env = append(os.Environ(), "SSH_AGENT_PID="+a.pid, "SSH_AUTH_SOCK="+a.sock)
+	if err := killCmd.Run(); err != nil {
+		log.Printf("Warning: failed to stop ssh-agent (PID %s): %v", a.pid, err)
+	} else {
+		log.Printf("SSH agent stopped (PID: %s)", a.pid)
+	}
+}
+
 // run is the main action for executing the playbooks.
 func run(ctx context.Context, c *cli.Command) error {
 	// Validate parameters.
@@ -478,6 +615,18 @@ func run(ctx context.Context, c *cli.Command) error {
 	// Create context with timeout.
 	ctx, cancel := context.WithTimeout(ctx, timeoutDuration)
 	defer cancel()
+
+	// Start ssh-agent if a private key is provided, so that ProxyCommand
+	// and bastion host connections also have access to the key.
+	extraEnv := make(map[string]string)
+	if privateKey := c.String("private-key"); privateKey != "" {
+		agent, err := startSSHAgent(privateKey, c.String("private-key-passphrase"))
+		if err != nil {
+			return fmt.Errorf("could not start ssh-agent for private key: %w", err)
+		}
+		defer agent.stop()
+		extraEnv["SSH_AUTH_SOCK"] = agent.sock
+	}
 
 	log.Printf("Starting Ansible playbook execution with %d playbooks", len(c.StringSlice("playbook")))
 
@@ -558,6 +707,7 @@ func run(ctx context.Context, c *cli.Command) error {
 			AnyErrorsFatal:     c.Bool("any-errors-fatal"),
 			ConfigFile:         c.String("config-file"),
 			TempDir:            c.String("temp-dir"),
+			ExtraEnv:           extraEnv,
 		},
 	}
 
