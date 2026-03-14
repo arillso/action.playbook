@@ -130,7 +130,10 @@ inputs:
         description: "Sets the verbosity level, ranging from 0 (minimal output) to 4 (maximum verbosity)."
         required: false
     private_key:
-        description: "Specifies the SSH private key content for connections. The key will be written to a temporary file by the action. Should be stored in a GitHub Secret."
+        description: "Specifies the SSH private key content for connections. The key is loaded into ssh-agent, making it available to ProxyCommand and bastion host connections. Should be stored in a GitHub Secret."
+        required: false
+    private_key_passphrase:
+        description: "Passphrase for the SSH private key. If provided, the passphrase is used to unlock the key when adding it to ssh-agent. Should be stored in a GitHub Secret."
         required: false
     user:
         description: "Defines the username for making connections."
