@@ -69,14 +69,14 @@ jobs:
 
                   ACTION_IMAGE=$(grep '^\s*image:' action.yml | sed 's/.*action\.playbook://' | tr -d '"' | tr -d ' ')
 
-                  if [[ "${ACTION_IMAGE}" != "${MAJOR_MINOR}" ]]; then
-                    echo "::error::action.yml image tag '${ACTION_IMAGE}' does not match release major.minor '${MAJOR_MINOR}'"
-                    echo "Expected: docker://ghcr.io/arillso/action.playbook:${MAJOR_MINOR}"
+                  if [[ "${ACTION_IMAGE}" != "${MAJOR_MINOR}" && "${ACTION_IMAGE}" != "${VERSION_CLEAN}" ]]; then
+                    echo "::error::action.yml image tag '${ACTION_IMAGE}' does not match release version '${VERSION_CLEAN}' or major.minor '${MAJOR_MINOR}'"
+                    echo "Expected: docker://ghcr.io/arillso/action.playbook:${VERSION_CLEAN} or :${MAJOR_MINOR}"
                     echo "Found:    docker://ghcr.io/arillso/action.playbook:${ACTION_IMAGE}"
                     exit 1
                   fi
 
-                  echo "action.yml image version '${ACTION_IMAGE}' matches release '${MAJOR_MINOR}'"
+                  echo "action.yml image version '${ACTION_IMAGE}' matches release '${VERSION_CLEAN}'"
 
     build-and-push-image:
         runs-on: ubuntu-latest
