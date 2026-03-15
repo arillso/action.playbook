@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -295,6 +296,11 @@ var appFlags = []cli.Flag{
 		Usage:   "Extra arguments passed exclusively to SSH",
 		Sources: cli.EnvVars("ANSIBLE_SSH_EXTRA_ARGS", "INPUT_SSH_EXTRA_ARGS", "PLUGIN_SSH_EXTRA_ARGS"),
 	},
+	&cli.StringFlag{
+		Name:    "known-hosts",
+		Usage:   "SSH known hosts entries for host key verification",
+		Sources: cli.EnvVars("ANSIBLE_KNOWN_HOSTS", "INPUT_KNOWN_HOSTS", "PLUGIN_KNOWN_HOSTS"),
+	},
 	&cli.BoolFlag{
 		Name:    "become",
 		Aliases: []string{"b"},
@@ -488,6 +494,39 @@ func validateParameters(inventories, playbooks []string, galaxyFile string) erro
 	return nil
 }
 
+// setupKnownHosts appends SSH known host entries to ~/.ssh/known_hosts.
+func setupKnownHosts(content string) error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to determine home directory: %w", err)
+	}
+	sshDir := filepath.Join(home, ".ssh")
+	if err := os.MkdirAll(sshDir, 0700); err != nil {
+		return fmt.Errorf("failed to create .ssh directory: %w", err)
+	}
+	normalized := strings.ReplaceAll(content, "\r\n", "\n")
+	if !strings.HasSuffix(normalized, "\n") {
+		normalized += "\n"
+	}
+	khPath := filepath.Join(sshDir, "known_hosts")
+	f, err := os.OpenFile(khPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		return fmt.Errorf("failed to open known_hosts: %w", err)
+	}
+	defer func() { _ = f.Close() }()
+	if _, err := f.WriteString(normalized); err != nil {
+		return fmt.Errorf("failed to write known_hosts: %w", err)
+	}
+	var entryCount int
+	for _, line := range strings.Split(strings.TrimSpace(normalized), "\n") {
+		if line != "" && !strings.HasPrefix(line, "#") {
+			entryCount++
+		}
+	}
+	log.Printf("Written %d known host entries", entryCount)
+	return nil
+}
+
 // sshAgent holds the state of a running ssh-agent process.
 type sshAgent struct {
 	sock string
@@ -636,6 +675,13 @@ func run(ctx context.Context, c *cli.Command) error {
 	// Create context with timeout.
 	ctx, cancel := context.WithTimeout(ctx, timeoutDuration)
 	defer cancel()
+
+	// Write known_hosts if provided.
+	if knownHosts := c.String("known-hosts"); knownHosts != "" {
+		if err := setupKnownHosts(knownHosts); err != nil {
+			return fmt.Errorf("could not setup known_hosts: %w", err)
+		}
+	}
 
 	// Start ssh-agent if a private key is provided, so that ProxyCommand
 	// and bastion host connections also have access to the key.
