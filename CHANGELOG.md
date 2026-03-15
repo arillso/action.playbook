@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-15
+
+### Added
+
+- `known_hosts` input for SSH host key verification
+- `dry_run` input as alias for `--check --diff` mode
+- Action outputs for `status` and `exit_code`
+- Auto-detection of Galaxy requirements file (`requirements.yml` / `requirements.yaml`)
+- GitHub Step Summary with Ansible execution results
+- `vault_password_file` input — auto-creates vault password file from secret
+- Retry mechanism for playbook execution via `retries` and `retry_delay` inputs
+- Optional ansible-lint pre-check via `lint` input
+- `output_file` input to capture Ansible stdout to a file
+- Support for multiple SSH keys via `additional_private_keys` input
+- SSH agent support for bastion/proxy host connections — private keys are now loaded into `ssh-agent`, making them available to `ProxyCommand` and multi-hop SSH
+- Passphrase-protected SSH key support via `private_key_passphrase` input using `SSH_ASKPASS`
+- Multiline YAML syntax for `inventory`, `playbook`, `extra_vars`, and `module_path` inputs (closes #18)
+- `output_callback` input to configure the Ansible stdout callback plugin
+- Comprehensive unit test suite (`main_test.go`) covering parameter validation, SSH agent lifecycle, passphrase handling, and input normalization
+- Comprehensive action input tests for all new features
+- `CONTRIBUTING.md` with development guidelines
+- Tooling configs: `.gitleaks.toml`, `.grype.yaml`, `.trivy.yaml`, `.checkov.yml`, `.pre-commit-config.yaml`, `.secretlintrc.json`, `.markdownlint.json`, `.markdown-link-check.json`, `.jscpd.json`, `.kics.json`
+
+### Changed
+
+- **Major:** Upgraded `go.ansible` from v1.x to v2.0.0
+- Ansible exit codes are now passed through to the GitHub Action exit code
+- SSH agent failure is now a hard error instead of silent fallback
+- Pinned Docker image tag in `action.yml` from `latest` to `0.4`
+- Renamed `callback_whitelist` to `callbacks_enabled` (deprecated alias still supported)
+- Migrated CI/CD workflows to reusable `arillso/.github` workflows
+- Modernized Makefile with structured targets
+- Updated Dockerfile builder to Go 1.26
+- Stripped binary build (`-ldflags="-s -w"`) for smaller image size
+- Extracted CLI flags to package-level `appFlags` variable for testability
+
+### Removed
+
+- Removed unused flags: `module-name`, `invalidate-cache`, `requirements`, `module-default`, `metadata-export`
+- Removed `parseModuleDefaults` helper function
+
+### Updated
+
+- `arillso/ansible` Docker image to v2.20.3
+- `github.com/urfave/cli/v3` from v3.6.1 to v3.7.0
+- GitHub Actions dependencies (v4, v6, v7)
+- `golang:alpine` Docker digest
+
 ## [0.4.0] - 2026-01-11
 
 ### Changed
