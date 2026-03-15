@@ -426,6 +426,18 @@ var appFlags = []cli.Flag{
 		Usage:   "Directory for temporary files",
 		Sources: cli.EnvVars("ANSIBLE_TEMP_DIR", "INPUT_TEMP_DIR", "PLUGIN_TEMP_DIR"),
 	},
+	&cli.IntFlag{
+		Name:    "retries",
+		Usage:   "Number of times to retry on failure (0 = no retries)",
+		Value:   0,
+		Sources: cli.EnvVars("ANSIBLE_RETRIES", "INPUT_RETRIES", "PLUGIN_RETRIES"),
+	},
+	&cli.IntFlag{
+		Name:    "retry-delay",
+		Usage:   "Delay in seconds between retries",
+		Value:   30,
+		Sources: cli.EnvVars("ANSIBLE_RETRY_DELAY", "INPUT_RETRY_DELAY", "PLUGIN_RETRY_DELAY"),
+	},
 }
 
 func main() {
@@ -704,6 +716,32 @@ func createVaultPasswordFile(password string) (string, error) {
 	return path, nil
 }
 
+// execWithRetry runs fn up to (1 + retries) times with a delay between attempts.
+// It returns nil on the first successful call, or the last error if all attempts fail.
+func execWithRetry(ctx context.Context, retries int, delay time.Duration, fn func(ctx context.Context) error) error {
+	if retries < 0 {
+		retries = 0
+	}
+	var err error
+	for attempt := 0; attempt <= retries; attempt++ {
+		if attempt > 0 {
+			log.Printf("Retry %d/%d after %v delay...", attempt, retries, delay)
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(delay):
+			}
+		}
+
+		err = fn(ctx)
+		if err == nil {
+			return nil
+		}
+		log.Printf("Attempt %d failed: %v", attempt+1, err)
+	}
+	return err
+}
+
 // run is the main action for executing the playbooks.
 func run(ctx context.Context, c *cli.Command) (execErr error) {
 	defer func() { writeActionOutputs(execErr) }()
@@ -851,8 +889,11 @@ func run(ctx context.Context, c *cli.Command) (execErr error) {
 		},
 	}
 
+	retries := c.Int("retries")
+	retryDelay := time.Duration(c.Int("retry-delay")) * time.Second
+
 	start := time.Now()
-	execErr = playbook.Exec(ctx)
+	execErr = execWithRetry(ctx, retries, retryDelay, playbook.Exec)
 	writeStepSummary(playbooks, execErr, time.Since(start))
 	return execErr
 }

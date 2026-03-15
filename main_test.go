@@ -762,3 +762,93 @@ func TestCreateVaultPasswordFile(t *testing.T) {
 		t.Errorf("expected permissions 0600, got %o", info.Mode().Perm())
 	}
 }
+
+func TestExecWithRetry_SuccessFirst(t *testing.T) {
+	calls := 0
+	err := execWithRetry(context.Background(), 3, time.Millisecond, func(_ context.Context) error {
+		calls++
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if calls != 1 {
+		t.Errorf("expected 1 call, got %d", calls)
+	}
+}
+
+func TestExecWithRetry_SuccessAfterRetries(t *testing.T) {
+	calls := 0
+	err := execWithRetry(context.Background(), 3, time.Millisecond, func(_ context.Context) error {
+		calls++
+		if calls < 3 {
+			return fmt.Errorf("attempt %d failed", calls)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if calls != 3 {
+		t.Errorf("expected 3 calls, got %d", calls)
+	}
+}
+
+func TestExecWithRetry_AllFail(t *testing.T) {
+	calls := 0
+	err := execWithRetry(context.Background(), 2, time.Millisecond, func(_ context.Context) error {
+		calls++
+		return fmt.Errorf("fail %d", calls)
+	})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if calls != 3 { // 1 initial + 2 retries
+		t.Errorf("expected 3 calls, got %d", calls)
+	}
+}
+
+func TestExecWithRetry_NoRetries(t *testing.T) {
+	calls := 0
+	err := execWithRetry(context.Background(), 0, time.Millisecond, func(_ context.Context) error {
+		calls++
+		return fmt.Errorf("fail")
+	})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if calls != 1 {
+		t.Errorf("expected 1 call, got %d", calls)
+	}
+}
+
+func TestExecWithRetry_ContextCancelled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	calls := 0
+	err := execWithRetry(ctx, 5, time.Second, func(_ context.Context) error {
+		calls++
+		cancel() // cancel before retry delay
+		return fmt.Errorf("fail")
+	})
+	if err != context.Canceled {
+		t.Errorf("expected context.Canceled, got %v", err)
+	}
+	if calls != 1 {
+		t.Errorf("expected 1 call, got %d", calls)
+	}
+}
+
+func TestExecWithRetry_NegativeRetries(t *testing.T) {
+	calls := 0
+	err := execWithRetry(context.Background(), -1, time.Millisecond, func(_ context.Context) error {
+		calls++
+		return fmt.Errorf("fail")
+	})
+	// Should still execute exactly once regardless of negative input.
+	if calls != 1 {
+		t.Errorf("expected 1 call, got %d", calls)
+	}
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}

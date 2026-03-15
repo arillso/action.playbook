@@ -6,6 +6,14 @@ inputs:
         description: "Timeout in minutes for the playbook execution (default: 30)."
         required: false
         default: "30"
+    retries:
+        description: "Number of times to retry on failure (0 = no retries, default: 0)."
+        required: false
+        default: "0"
+    retry_delay:
+        description: "Delay in seconds between retries (default: 30)."
+        required: false
+        default: "30"
 
     # Galaxy Configuration
     galaxy_file:
