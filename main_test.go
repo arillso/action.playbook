@@ -852,3 +852,49 @@ func TestExecWithRetry_NegativeRetries(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 }
+
+func TestRunAnsibleLint_NotInstalled(t *testing.T) {
+	// Use empty PATH so ansible-lint is not found.
+	t.Setenv("PATH", t.TempDir())
+
+	err := runAnsibleLint(context.Background(), []string{"playbook.yml"})
+	if err == nil {
+		t.Fatal("expected error when ansible-lint is not installed")
+	}
+	if !strings.Contains(err.Error(), "not installed") {
+		t.Errorf("expected 'not installed' error, got: %v", err)
+	}
+}
+
+func TestRunAnsibleLint_Passes(t *testing.T) {
+	// Create a fake ansible-lint that exits 0.
+	dir := t.TempDir()
+	script := filepath.Join(dir, "ansible-lint")
+	if err := os.WriteFile(script, []byte("#!/bin/sh\nexit 0\n"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", dir)
+
+	err := runAnsibleLint(context.Background(), []string{"playbook.yml"})
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+}
+
+func TestRunAnsibleLint_Fails(t *testing.T) {
+	// Create a fake ansible-lint that exits non-zero.
+	dir := t.TempDir()
+	script := filepath.Join(dir, "ansible-lint")
+	if err := os.WriteFile(script, []byte("#!/bin/sh\nexit 1\n"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", dir)
+
+	err := runAnsibleLint(context.Background(), []string{"playbook.yml"})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "ansible-lint failed") {
+		t.Errorf("expected 'ansible-lint failed' error, got: %v", err)
+	}
+}
