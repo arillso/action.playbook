@@ -785,7 +785,9 @@ func run(ctx context.Context, c *cli.Command) (execErr error) {
 		},
 	}
 
+	start := time.Now()
 	execErr = playbook.Exec(ctx)
+	writeStepSummary(playbooks, execErr, time.Since(start))
 	return execErr
 }
 
@@ -821,4 +823,44 @@ func writeActionOutputs(execErr error) {
 	if _, err := fmt.Fprintf(f, "status=%s\nexit_code=%d\n", status, exitCode); err != nil {
 		log.Printf("Warning: could not write action outputs: %v", err)
 	}
+}
+
+// writeStepSummary writes a markdown summary to $GITHUB_STEP_SUMMARY.
+func writeStepSummary(playbooks []string, execErr error, duration time.Duration) {
+	summaryFile := os.Getenv("GITHUB_STEP_SUMMARY")
+	if summaryFile == "" {
+		return
+	}
+
+	status := "✅ Success"
+	if execErr != nil {
+		var ansibleErr *ansible.AnsibleError
+		if errors.As(execErr, &ansibleErr) {
+			status = fmt.Sprintf("❌ Failed (exit code %d)", ansibleErr.ExitCode)
+		} else {
+			status = fmt.Sprintf("❌ Failed: %v", execErr)
+		}
+	}
+
+	playbookList := "`" + strings.Join(playbooks, "`, `") + "`"
+	summary := fmt.Sprintf("## Ansible Playbook Results\n\n| | |\n|---|---|\n| **Playbooks** | %s |\n| **Status** | %s |\n| **Duration** | %s |\n",
+		playbookList, status, formatDuration(duration))
+
+	f, err := os.OpenFile(summaryFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Printf("Warning: could not write step summary: %v", err)
+		return
+	}
+	defer func() { _ = f.Close() }()
+	_, _ = fmt.Fprint(f, summary)
+}
+
+// formatDuration formats a duration as "Xm Ys" or "Xs".
+func formatDuration(d time.Duration) string {
+	if d < time.Minute {
+		return fmt.Sprintf("%ds", int(d.Seconds()))
+	}
+	m := int(d.Minutes())
+	s := int(d.Seconds()) % 60
+	return fmt.Sprintf("%dm %ds", m, s)
 }

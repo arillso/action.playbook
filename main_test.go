@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	ansible "github.com/arillso/go.ansible/v2"
 	cli "github.com/urfave/cli/v3"
@@ -619,6 +620,50 @@ func TestWriteActionOutputs_AnsibleError(t *testing.T) {
 func TestWriteActionOutputs_NoEnvVar(t *testing.T) {
 	t.Setenv("GITHUB_OUTPUT", "")
 	writeActionOutputs(nil)
+}
+
+func TestWriteStepSummary_Success(t *testing.T) {
+	tmpFile := filepath.Join(t.TempDir(), "summary.md")
+	t.Setenv("GITHUB_STEP_SUMMARY", tmpFile)
+
+	writeStepSummary([]string{"site.yml", "deploy.yml"}, nil, 2*time.Minute+35*time.Second)
+
+	data, err := os.ReadFile(tmpFile)
+	if err != nil {
+		t.Fatalf("failed to read summary: %v", err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "site.yml") {
+		t.Error("expected playbook name in summary")
+	}
+	if !strings.Contains(content, "Success") {
+		t.Error("expected success status in summary")
+	}
+	if !strings.Contains(content, "2m 35s") {
+		t.Errorf("expected '2m 35s' in summary, got: %s", content)
+	}
+}
+
+func TestWriteStepSummary_NoEnvVar(t *testing.T) {
+	t.Setenv("GITHUB_STEP_SUMMARY", "")
+	// Should not panic or error.
+	writeStepSummary([]string{"test.yml"}, nil, time.Second)
+}
+
+func TestFormatDuration(t *testing.T) {
+	tests := []struct {
+		d    time.Duration
+		want string
+	}{
+		{30 * time.Second, "30s"},
+		{90 * time.Second, "1m 30s"},
+		{5*time.Minute + 10*time.Second, "5m 10s"},
+	}
+	for _, tt := range tests {
+		if got := formatDuration(tt.d); got != tt.want {
+			t.Errorf("formatDuration(%v) = %q, want %q", tt.d, got, tt.want)
+		}
+	}
 }
 
 func TestSSHAgentStop_Nil(t *testing.T) {
