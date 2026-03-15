@@ -104,6 +104,11 @@ inputs:
         default: 'false'
         required: false
 
+    # Output Options
+    output_file:
+        description: "Save Ansible stdout to a file (useful for capturing diff output for PR comments)."
+        required: false
+
     # Execution Options
     check:
         description: "Executes a dry run, showing what changes would be made without making them."

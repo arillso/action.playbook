@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -442,6 +443,11 @@ var appFlags = []cli.Flag{
 		Name:    "lint",
 		Usage:   "Run ansible-lint on playbooks before execution",
 		Sources: cli.EnvVars("ANSIBLE_LINT", "INPUT_LINT", "PLUGIN_LINT"),
+	},
+	&cli.StringFlag{
+		Name:    "output-file",
+		Usage:   "Save Ansible stdout to a file (useful for capturing diff output)",
+		Sources: cli.EnvVars("ANSIBLE_OUTPUT_FILE", "INPUT_OUTPUT_FILE", "PLUGIN_OUTPUT_FILE"),
 	},
 }
 
@@ -918,6 +924,22 @@ func run(ctx context.Context, c *cli.Command) (execErr error) {
 			TempDir:            c.String("temp-dir"),
 			ExtraEnv:           extraEnv,
 		},
+	}
+
+	// If output-file is set, tee stdout and stderr to a file for later use (e.g., PR comments).
+	if outputFile := c.String("output-file"); outputFile != "" {
+		f, err := os.Create(outputFile)
+		if err != nil {
+			return fmt.Errorf("could not create output file %s: %w", outputFile, err)
+		}
+		defer func() {
+			if cerr := f.Close(); cerr != nil {
+				fmt.Fprintf(os.Stderr, "warning: failed to close output file: %v\n", cerr)
+			}
+		}()
+		playbook.Stdout = io.MultiWriter(os.Stdout, f)
+		playbook.Stderr = io.MultiWriter(os.Stderr, f)
+		fmt.Fprintf(os.Stderr, "Ansible output will be saved to %s\n", outputFile)
 	}
 
 	retries := c.Int("retries")
