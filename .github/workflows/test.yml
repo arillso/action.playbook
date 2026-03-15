@@ -1055,7 +1055,12 @@ jobs:
 
             - name: Fetch GitHub known_hosts
               id: known-hosts
-              run: echo "value=$(ssh-keyscan github.com 2>/dev/null)" >> "$GITHUB_OUTPUT"
+              run: |
+                  {
+                    echo "value<<KNOWN_HOSTS_EOF"
+                    ssh-keyscan github.com 2>/dev/null
+                    echo "KNOWN_HOSTS_EOF"
+                  } >> "$GITHUB_OUTPUT"
 
             - name: Test with known_hosts
               uses: ./
