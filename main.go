@@ -842,7 +842,11 @@ func writeStepSummary(playbooks []string, execErr error, duration time.Duration)
 		}
 	}
 
-	playbookList := "`" + strings.Join(playbooks, "`, `") + "`"
+	escaped := make([]string, len(playbooks))
+	for i, p := range playbooks {
+		escaped[i] = strings.ReplaceAll(p, "|", `\|`)
+	}
+	playbookList := "`" + strings.Join(escaped, "`, `") + "`"
 	summary := fmt.Sprintf("## Ansible Playbook Results\n\n| | |\n|---|---|\n| **Playbooks** | %s |\n| **Status** | %s |\n| **Duration** | %s |\n",
 		playbookList, status, formatDuration(duration))
 
@@ -852,7 +856,9 @@ func writeStepSummary(playbooks []string, execErr error, duration time.Duration)
 		return
 	}
 	defer func() { _ = f.Close() }()
-	_, _ = fmt.Fprint(f, summary)
+	if _, err := fmt.Fprint(f, summary); err != nil {
+		log.Printf("Warning: could not write step summary: %v", err)
+	}
 }
 
 // formatDuration formats a duration as "Xm Ys" or "Xs".

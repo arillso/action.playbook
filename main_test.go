@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -648,6 +649,21 @@ func TestWriteStepSummary_NoEnvVar(t *testing.T) {
 	t.Setenv("GITHUB_STEP_SUMMARY", "")
 	// Should not panic or error.
 	writeStepSummary([]string{"test.yml"}, nil, time.Second)
+}
+
+func TestWriteStepSummary_Failure(t *testing.T) {
+	tmpFile := filepath.Join(t.TempDir(), "summary.md")
+	t.Setenv("GITHUB_STEP_SUMMARY", tmpFile)
+
+	writeStepSummary([]string{"site.yml"}, errors.New("something went wrong"), 5*time.Second)
+
+	data, err := os.ReadFile(tmpFile)
+	if err != nil {
+		t.Fatalf("failed to read summary: %v", err)
+	}
+	if !strings.Contains(string(data), "Failed") {
+		t.Error("expected failure status in summary")
+	}
 }
 
 func TestFormatDuration(t *testing.T) {
