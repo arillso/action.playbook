@@ -661,7 +661,9 @@ func (a *sshAgent) stop() {
 }
 
 // run is the main action for executing the playbooks.
-func run(ctx context.Context, c *cli.Command) error {
+func run(ctx context.Context, c *cli.Command) (execErr error) {
+	defer func() { writeActionOutputs(execErr) }()
+
 	// Normalize slice flags once to support both comma-separated and multiline inputs.
 	inventories := normalizeSlice(c.StringSlice("inventory"))
 	playbooks := normalizeSlice(c.StringSlice("playbook"))
@@ -783,8 +785,7 @@ func run(ctx context.Context, c *cli.Command) error {
 		},
 	}
 
-	execErr := playbook.Exec(ctx)
-	writeActionOutputs(execErr)
+	execErr = playbook.Exec(ctx)
 	return execErr
 }
 
@@ -812,6 +813,12 @@ func writeActionOutputs(execErr error) {
 		log.Printf("Warning: could not write action outputs: %v", err)
 		return
 	}
-	defer func() { _ = f.Close() }()
-	_, _ = fmt.Fprintf(f, "status=%s\nexit_code=%d\n", status, exitCode)
+	defer func() {
+		if cerr := f.Close(); cerr != nil {
+			log.Printf("Warning: could not close action outputs file: %v", cerr)
+		}
+	}()
+	if _, err := fmt.Fprintf(f, "status=%s\nexit_code=%d\n", status, exitCode); err != nil {
+		log.Printf("Warning: could not write action outputs: %v", err)
+	}
 }

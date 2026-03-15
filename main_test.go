@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	ansible "github.com/arillso/go.ansible/v2"
 	cli "github.com/urfave/cli/v3"
 )
 
@@ -596,6 +597,22 @@ func TestWriteActionOutputs_Failed(t *testing.T) {
 	}
 	if !strings.Contains(content, "exit_code=1") {
 		t.Errorf("expected exit_code=1, got: %s", content)
+	}
+}
+
+func TestWriteActionOutputs_AnsibleError(t *testing.T) {
+	tmpFile := filepath.Join(t.TempDir(), "output")
+	t.Setenv("GITHUB_OUTPUT", tmpFile)
+
+	writeActionOutputs(&ansible.AnsibleError{ExitCode: 2})
+
+	data, _ := os.ReadFile(tmpFile)
+	content := string(data)
+	if !strings.Contains(content, "status=failed") {
+		t.Errorf("expected status=failed, got: %s", content)
+	}
+	if !strings.Contains(content, "exit_code=2") {
+		t.Errorf("expected exit_code=2, got: %s", content)
 	}
 }
 
