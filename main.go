@@ -691,7 +691,9 @@ func (a *sshAgent) addKey(keyContent string) error {
 		return fmt.Errorf("failed to close temp key file: %w", err)
 	}
 
-	addCmd := exec.Command("ssh-add", keyPath)
+	addCtx, addCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer addCancel()
+	addCmd := exec.CommandContext(addCtx, "ssh-add", keyPath)
 	addCmd.Env = append(os.Environ(), "SSH_AUTH_SOCK="+a.sock)
 	if out, err := addCmd.CombinedOutput(); err != nil {
 		_ = os.Remove(keyPath)
@@ -701,6 +703,47 @@ func (a *sshAgent) addKey(keyContent string) error {
 	_ = os.Remove(keyPath)
 	log.Printf("Additional SSH key added to agent")
 	return nil
+}
+
+// splitPEMKeys splits raw input values into individual PEM key blocks.
+// Unlike normalizeSlice, this preserves multi-line PEM content by splitting
+// on PEM block boundaries rather than on bare newlines.
+func splitPEMKeys(values []string) []string {
+	var keys []string
+	for _, v := range values {
+		v = strings.TrimSpace(v)
+		if v == "" {
+			continue
+		}
+		// Split on PEM END markers to separate multiple keys in one value.
+		rest := v
+		for rest != "" {
+			idx := strings.Index(rest, "-----END ")
+			if idx == -1 {
+				// No END marker; treat the remainder as a single key.
+				if k := strings.TrimSpace(rest); k != "" {
+					keys = append(keys, k)
+				}
+				break
+			}
+			// Find the closing "-----" after the END tag.
+			endIdx := strings.Index(rest[idx+len("-----END "):], "-----")
+			if endIdx == -1 {
+				// Malformed; take everything.
+				if k := strings.TrimSpace(rest); k != "" {
+					keys = append(keys, k)
+				}
+				break
+			}
+			boundary := idx + len("-----END ") + endIdx + len("-----")
+			key := strings.TrimSpace(rest[:boundary])
+			if key != "" {
+				keys = append(keys, key)
+			}
+			rest = rest[boundary:]
+		}
+	}
+	return keys
 }
 
 // stop kills the ssh-agent process.
@@ -852,7 +895,7 @@ func run(ctx context.Context, c *cli.Command) (execErr error) {
 	// Start ssh-agent if a private key is provided, so that ProxyCommand
 	// and bastion host connections also have access to the key.
 	extraEnv := make(map[string]string)
-	additionalKeys := normalizeSlice(c.StringSlice("additional-private-keys"))
+	additionalKeys := splitPEMKeys(c.StringSlice("additional-private-keys"))
 	if privateKey := c.String("private-key"); privateKey != "" {
 		agent, err := startSSHAgent(privateKey, c.String("private-key-passphrase"))
 		if err != nil {
