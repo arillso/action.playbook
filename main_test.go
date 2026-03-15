@@ -900,7 +900,7 @@ func TestRunAnsibleLint_Fails(t *testing.T) {
 }
 
 func TestSplitPEMKeys_SingleKey(t *testing.T) {
-	key := "-----BEGIN OPENSSH PRIVATE KEY-----\nAAA\n-----END OPENSSH PRIVATE KEY-----"
+	key := "-----BEGIN TEST KEY-----\nAAA\n-----END TEST KEY-----"
 	keys := splitPEMKeys([]string{key})
 	if len(keys) != 1 {
 		t.Fatalf("expected 1 key, got %d", len(keys))
@@ -911,8 +911,8 @@ func TestSplitPEMKeys_SingleKey(t *testing.T) {
 }
 
 func TestSplitPEMKeys_MultipleKeysInOneValue(t *testing.T) {
-	key1 := "-----BEGIN RSA PRIVATE KEY-----\nAAA\n-----END RSA PRIVATE KEY-----"
-	key2 := "-----BEGIN OPENSSH PRIVATE KEY-----\nBBB\n-----END OPENSSH PRIVATE KEY-----"
+	key1 := "-----BEGIN TEST RSA KEY-----\nAAA\n-----END TEST RSA KEY-----"
+	key2 := "-----BEGIN TEST KEY-----\nBBB\n-----END TEST KEY-----"
 	combined := key1 + "\n" + key2
 	keys := splitPEMKeys([]string{combined})
 	if len(keys) != 2 {
@@ -934,8 +934,8 @@ func TestSplitPEMKeys_EmptyInput(t *testing.T) {
 }
 
 func TestSplitPEMKeys_SeparateValues(t *testing.T) {
-	key1 := "-----BEGIN RSA PRIVATE KEY-----\nAAA\n-----END RSA PRIVATE KEY-----"
-	key2 := "-----BEGIN OPENSSH PRIVATE KEY-----\nBBB\n-----END OPENSSH PRIVATE KEY-----"
+	key1 := "-----BEGIN TEST RSA KEY-----\nAAA\n-----END TEST RSA KEY-----"
+	key2 := "-----BEGIN TEST KEY-----\nBBB\n-----END TEST KEY-----"
 	keys := splitPEMKeys([]string{key1, key2})
 	if len(keys) != 2 {
 		t.Fatalf("expected 2 keys, got %d", len(keys))
