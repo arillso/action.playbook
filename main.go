@@ -438,6 +438,11 @@ var appFlags = []cli.Flag{
 		Value:   30,
 		Sources: cli.EnvVars("ANSIBLE_RETRY_DELAY", "INPUT_RETRY_DELAY", "PLUGIN_RETRY_DELAY"),
 	},
+	&cli.BoolFlag{
+		Name:    "lint",
+		Usage:   "Run ansible-lint on playbooks before execution",
+		Sources: cli.EnvVars("ANSIBLE_LINT", "INPUT_LINT", "PLUGIN_LINT"),
+	},
 }
 
 func main() {
@@ -742,6 +747,25 @@ func execWithRetry(ctx context.Context, retries int, delay time.Duration, fn fun
 	return err
 }
 
+// runAnsibleLint runs ansible-lint on the given playbooks. It returns an error
+// if ansible-lint is not installed or if linting fails.
+func runAnsibleLint(ctx context.Context, playbooks []string) error {
+	if _, err := exec.LookPath("ansible-lint"); err != nil {
+		return fmt.Errorf("ansible-lint is not installed: %w", err)
+	}
+
+	cmd := exec.CommandContext(ctx, "ansible-lint", playbooks...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	log.Printf("Running ansible-lint on %d playbook(s)...", len(playbooks))
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("ansible-lint failed: %w", err)
+	}
+	log.Printf("ansible-lint passed")
+	return nil
+}
+
 // run is the main action for executing the playbooks.
 func run(ctx context.Context, c *cli.Command) (execErr error) {
 	defer func() { writeActionOutputs(execErr) }()
@@ -761,6 +785,13 @@ func run(ctx context.Context, c *cli.Command) (execErr error) {
 	// Validate parameters using the already-normalized slices.
 	if err := validateParameters(inventories, playbooks, galaxyFile); err != nil {
 		return err
+	}
+
+	// Run ansible-lint if requested.
+	if c.Bool("lint") {
+		if err := runAnsibleLint(ctx, playbooks); err != nil {
+			return err
+		}
 	}
 
 	// Set execution timeout based on flag.

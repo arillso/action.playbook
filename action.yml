@@ -98,6 +98,12 @@ inputs:
         description: "Prepend directories to the module library path. Supports comma-separated or multiline YAML syntax for multiple paths."
         required: false
 
+    # Pre-execution
+    lint:
+        description: "Run ansible-lint on playbooks before execution."
+        default: 'false'
+        required: false
+
     # Execution Options
     check:
         description: "Executes a dry run, showing what changes would be made without making them."
