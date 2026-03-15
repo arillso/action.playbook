@@ -494,9 +494,13 @@ func validateParameters(inventories, playbooks []string, galaxyFile string) erro
 	return nil
 }
 
-// setupKnownHosts writes SSH known host entries to ~/.ssh/known_hosts.
+// setupKnownHosts appends SSH known host entries to ~/.ssh/known_hosts.
 func setupKnownHosts(content string) error {
-	sshDir := filepath.Join(os.Getenv("HOME"), ".ssh")
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to determine home directory: %w", err)
+	}
+	sshDir := filepath.Join(home, ".ssh")
 	if err := os.MkdirAll(sshDir, 0700); err != nil {
 		return fmt.Errorf("failed to create .ssh directory: %w", err)
 	}
@@ -505,10 +509,21 @@ func setupKnownHosts(content string) error {
 		normalized += "\n"
 	}
 	khPath := filepath.Join(sshDir, "known_hosts")
-	if err := os.WriteFile(khPath, []byte(normalized), 0600); err != nil {
+	f, err := os.OpenFile(khPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		return fmt.Errorf("failed to open known_hosts: %w", err)
+	}
+	defer func() { _ = f.Close() }()
+	if _, err := f.WriteString(normalized); err != nil {
 		return fmt.Errorf("failed to write known_hosts: %w", err)
 	}
-	log.Printf("Written %d known host entries", len(strings.Split(strings.TrimSpace(normalized), "\n")))
+	var entryCount int
+	for _, line := range strings.Split(strings.TrimSpace(normalized), "\n") {
+		if line != "" && !strings.HasPrefix(line, "#") {
+			entryCount++
+		}
+	}
+	log.Printf("Written %d known host entries", entryCount)
 	return nil
 }
 
