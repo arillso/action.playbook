@@ -189,6 +189,11 @@ var appFlags = []cli.Flag{
 		Sources: cli.EnvVars("ANSIBLE_DIFF", "INPUT_DIFF", "PLUGIN_DIFF"),
 	},
 	&cli.BoolFlag{
+		Name:    "dry-run",
+		Usage:   "Enable both check and diff mode for a dry run",
+		Sources: cli.EnvVars("ANSIBLE_DRY_RUN", "INPUT_DRY_RUN", "PLUGIN_DRY_RUN"),
+	},
+	&cli.BoolFlag{
 		Name:    "flush-cache",
 		Usage:   "Clear the fact cache for all hosts in the inventory",
 		Sources: cli.EnvVars("ANSIBLE_FLUSH_CACHE", "INPUT_FLUSH_CACHE", "PLUGIN_FLUSH_CACHE"),
@@ -728,8 +733,8 @@ func run(ctx context.Context, c *cli.Command) error {
 			Tags:          c.String("tags"),
 			ExtraVars:     extraVars,
 			ModulePath:    modulePath,
-			Check:         c.Bool("check"),
-			Diff:          c.Bool("diff"),
+			Check:         c.Bool("check") || c.Bool("dry-run"),
+			Diff:          c.Bool("diff") || c.Bool("dry-run"),
 			FlushCache:    c.Bool("flush-cache"),
 			ForceHandlers: c.Bool("force-handlers"),
 			ListHosts:     c.Bool("list-hosts"),

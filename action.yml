@@ -97,6 +97,10 @@ inputs:
     diff:
         description: "Shows the differences in files and templates when changing them."
         required: false
+    dry_run:
+        description: "Enables both check and diff mode for a dry run without making changes."
+        required: false
+        default: 'false'
     flush_cache:
         description: "Clears the fact cache for every host in the inventory."
         required: false
