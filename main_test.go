@@ -518,17 +518,12 @@ func TestSSHAgentStop_Nil(t *testing.T) {
 
 func TestDetectGalaxyFile_Found(t *testing.T) {
 	dir := t.TempDir()
-	origDir, _ := os.Getwd()
-	if err := os.Chdir(dir); err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = os.Chdir(origDir) }()
 
-	if err := os.WriteFile("requirements.yml", []byte("---\nroles: []\n"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "requirements.yml"), []byte("---\nroles: []\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
 
-	result := detectGalaxyFile()
+	result := detectGalaxyFile(dir)
 	if result != "requirements.yml" {
 		t.Errorf("expected requirements.yml, got %q", result)
 	}
@@ -536,20 +531,15 @@ func TestDetectGalaxyFile_Found(t *testing.T) {
 
 func TestDetectGalaxyFile_PreferFirst(t *testing.T) {
 	dir := t.TempDir()
-	origDir, _ := os.Getwd()
-	if err := os.Chdir(dir); err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = os.Chdir(origDir) }()
 
 	// Create both files; requirements.yml should be preferred (listed first).
 	for _, name := range []string{"requirements.yml", "requirements.yaml"} {
-		if err := os.WriteFile(name, []byte("---\n"), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte("---\n"), 0644); err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	result := detectGalaxyFile()
+	result := detectGalaxyFile(dir)
 	if result != "requirements.yml" {
 		t.Errorf("expected requirements.yml, got %q", result)
 	}
@@ -557,17 +547,12 @@ func TestDetectGalaxyFile_PreferFirst(t *testing.T) {
 
 func TestDetectGalaxyFile_Yaml(t *testing.T) {
 	dir := t.TempDir()
-	origDir, _ := os.Getwd()
-	if err := os.Chdir(dir); err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = os.Chdir(origDir) }()
 
-	if err := os.WriteFile("requirements.yaml", []byte("---\n"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "requirements.yaml"), []byte("---\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
 
-	result := detectGalaxyFile()
+	result := detectGalaxyFile(dir)
 	if result != "requirements.yaml" {
 		t.Errorf("expected requirements.yaml, got %q", result)
 	}
@@ -575,13 +560,8 @@ func TestDetectGalaxyFile_Yaml(t *testing.T) {
 
 func TestDetectGalaxyFile_NotFound(t *testing.T) {
 	dir := t.TempDir()
-	origDir, _ := os.Getwd()
-	if err := os.Chdir(dir); err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = os.Chdir(origDir) }()
 
-	result := detectGalaxyFile()
+	result := detectGalaxyFile(dir)
 	if result != "" {
 		t.Errorf("expected empty string, got %q", result)
 	}

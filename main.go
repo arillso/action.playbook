@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -624,10 +625,10 @@ var defaultGalaxyFiles = []string{
 }
 
 // detectGalaxyFile returns the first existing file from defaultGalaxyFiles,
-// or an empty string if none are found.
-func detectGalaxyFile() string {
+// or an empty string if none are found. dir specifies the directory to search in.
+func detectGalaxyFile(dir string) string {
 	for _, name := range defaultGalaxyFiles {
-		if _, err := os.Stat(name); err == nil {
+		if _, err := os.Stat(filepath.Join(dir, name)); err == nil {
 			log.Printf("Auto-detected Galaxy requirements file: %s", name)
 			return name
 		}
@@ -646,7 +647,7 @@ func run(ctx context.Context, c *cli.Command) error {
 	// Auto-detect Galaxy file if not explicitly provided.
 	galaxyFile := c.String("galaxy-file")
 	if galaxyFile == "" {
-		galaxyFile = detectGalaxyFile()
+		galaxyFile = detectGalaxyFile(".")
 	}
 
 	// Validate parameters using the already-normalized slices.
