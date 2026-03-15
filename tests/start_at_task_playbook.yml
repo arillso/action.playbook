@@ -1,0 +1,21 @@
+---
+- name: Start At Task Test Playbook
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: First task - should be skipped
+      ansible.builtin.debug:
+        msg: "This is the first task"
+
+    - name: Second task - should be skipped
+      ansible.builtin.debug:
+        msg: "This is the second task"
+
+    - name: Target task - start here
+      ansible.builtin.debug:
+        msg: "Execution started at this task"
+
+    - name: Fourth task - should run
+      ansible.builtin.debug:
+        msg: "This task runs after the target"

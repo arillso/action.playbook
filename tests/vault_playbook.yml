@@ -1,0 +1,19 @@
+---
+- name: Vault Test Playbook
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    # This variable will be overridden by the vault-encrypted vars file
+    vault_secret: "not decrypted"
+  tasks:
+    - name: Display vault secret
+      ansible.builtin.debug:
+        msg: "Vault secret value is: {{ vault_secret }}"
+
+    - name: Verify vault secret was decrypted
+      ansible.builtin.assert:
+        that:
+          - vault_secret == "decrypted_successfully"
+        fail_msg: "Vault secret was not decrypted correctly"
+        success_msg: "Vault decryption working correctly"

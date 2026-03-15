@@ -1,0 +1,9 @@
+---
+- name: Second Playbook for Multi-Playbook Tests
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Display second playbook message
+      ansible.builtin.debug:
+        msg: "Second playbook executed successfully"

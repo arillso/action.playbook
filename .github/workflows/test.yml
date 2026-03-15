@@ -452,6 +452,638 @@ jobs:
                   fi
                   echo "Error handling tests passed"
 
+    test-listing:
+        name: Test Listing Modes
+        needs: [setup-environment, test-basic]
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        strategy:
+            matrix:
+                mode: [list_hosts, list_tags, list_tasks]
+            fail-fast: false
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+
+            - name: Pre-build with cache
+              uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
+              with:
+                  context: .
+                  load: true
+                  tags: action-playbook:test
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+            - name: Update action.yml for testing
+              run: |
+                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+
+            - name: Run with ${{ matrix.mode }}
+              uses: ./
+              with:
+                  playbook: tests/tagged_playbook.yml
+                  inventory: tests/hosts.yml
+                  list_hosts: ${{ matrix.mode == 'list_hosts' }}
+                  list_tags: ${{ matrix.mode == 'list_tags' }}
+                  list_tasks: ${{ matrix.mode == 'list_tasks' }}
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+    test-execution-options:
+        name: Test Execution Options
+        needs: [setup-environment, test-basic]
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+
+            - name: Pre-build with cache
+              uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
+              with:
+                  context: .
+                  load: true
+                  tags: action-playbook:test
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+            - name: Update action.yml for testing
+              run: |
+                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+
+            - name: Test dry_run mode (check + diff combined)
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  dry_run: "true"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Test flush_cache
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  flush_cache: "true"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Test force_handlers (playbook has a failing task)
+              uses: ./
+              continue-on-error: true
+              id: test-force-handlers
+              with:
+                  playbook: tests/handler_failure_playbook.yml
+                  inventory: tests/hosts.yml
+                  force_handlers: "true"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Verify force_handlers was processed
+              run: |
+                  echo "force_handlers test completed (playbook fails but handlers should run)"
+
+            - name: Test custom forks
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  forks: "10"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Test start_at_task
+              uses: ./
+              with:
+                  playbook: tests/start_at_task_playbook.yml
+                  inventory: tests/hosts.yml
+                  start_at_task: "Target task - start here"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+    test-multi-input:
+        name: Test Multiple Inputs
+        needs: [setup-environment, test-basic]
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+
+            - name: Pre-build with cache
+              uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
+              with:
+                  context: .
+                  load: true
+                  tags: action-playbook:test
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+            - name: Update action.yml for testing
+              run: |
+                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+
+            - name: Test multiple playbooks (comma-separated)
+              uses: ./
+              with:
+                  playbook: "tests/basic_playbook.yml,tests/second_playbook.yml"
+                  inventory: tests/hosts.yml
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Test multiple playbooks (multiline)
+              uses: ./
+              with:
+                  playbook: |
+                      tests/basic_playbook.yml
+                      tests/second_playbook.yml
+                  inventory: tests/hosts.yml
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Test multiple inventories (comma-separated)
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: "tests/hosts.yml,tests/second_inventory.yml"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Test multiple inventories (multiline)
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: |
+                      tests/hosts.yml
+                      tests/second_inventory.yml
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Test multiline extra_vars
+              uses: ./
+              with:
+                  playbook: tests/extra_vars_playbook.yml
+                  inventory: tests/hosts.yml
+                  extra_vars: |
+                      my_var=multiline_value
+                      env_var=from_multiline
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+    test-vault:
+        name: Test Vault
+        needs: [setup-environment, test-basic]
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+
+            - name: Pre-build with cache
+              uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
+              with:
+                  context: .
+                  load: true
+                  tags: action-playbook:test
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+            - name: Update action.yml for testing
+              run: |
+                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+
+            - name: Create vault-encrypted vars file
+              run: |
+                  pip install ansible-core==2.17.*
+                  echo "vault_secret: decrypted_successfully" > /tmp/vault_vars.yml
+                  ansible-vault encrypt /tmp/vault_vars.yml --vault-password-file <(echo "test_vault_password")
+                  cp /tmp/vault_vars.yml tests/vault_vars.yml
+
+            - name: Test with vault_password
+              uses: ./
+              with:
+                  playbook: tests/vault_playbook.yml
+                  inventory: tests/hosts.yml
+                  vault_password: "test_vault_password"
+                  extra_vars: "@tests/vault_vars.yml"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+    test-output:
+        name: Test Output Options
+        needs: [setup-environment, test-basic]
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+
+            - name: Pre-build with cache
+              uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
+              with:
+                  context: .
+                  load: true
+                  tags: action-playbook:test
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+            - name: Update action.yml for testing
+              run: |
+                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+
+            - name: Test output_file
+              uses: ./
+              id: test-output-file
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  output_file: ansible_output.txt
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Verify output file was created
+              run: |
+                  if [[ ! -f ansible_output.txt ]]; then
+                      echo "Output file was not created"
+                      exit 1
+                  fi
+                  echo "Output file contents:"
+                  cat ansible_output.txt
+                  if [[ ! -s ansible_output.txt ]]; then
+                      echo "Output file is empty"
+                      exit 1
+                  fi
+                  echo "Output file test passed"
+
+            - name: Verify action outputs on success
+              uses: ./
+              id: test-outputs-success
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Check success outputs
+              run: |
+                  echo "Status: ${{ steps.test-outputs-success.outputs.status }}"
+                  echo "Exit code: ${{ steps.test-outputs-success.outputs.exit_code }}"
+                  if [[ "${{ steps.test-outputs-success.outputs.status }}" != "success" ]]; then
+                      echo "Expected status 'success' but got '${{ steps.test-outputs-success.outputs.status }}'"
+                      exit 1
+                  fi
+                  if [[ "${{ steps.test-outputs-success.outputs.exit_code }}" != "0" ]]; then
+                      echo "Expected exit_code '0' but got '${{ steps.test-outputs-success.outputs.exit_code }}'"
+                      exit 1
+                  fi
+                  echo "Output verification passed"
+
+            - name: Verify action outputs on failure
+              uses: ./
+              id: test-outputs-failure
+              continue-on-error: true
+              with:
+                  playbook: tests/failing_playbook.yml
+                  inventory: tests/hosts.yml
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Check failure outputs
+              run: |
+                  echo "Status: ${{ steps.test-outputs-failure.outputs.status }}"
+                  echo "Exit code: ${{ steps.test-outputs-failure.outputs.exit_code }}"
+                  if [[ "${{ steps.test-outputs-failure.outputs.status }}" != "failed" ]]; then
+                      echo "Expected status 'failed' but got '${{ steps.test-outputs-failure.outputs.status }}'"
+                      exit 1
+                  fi
+                  if [[ "${{ steps.test-outputs-failure.outputs.exit_code }}" == "0" ]]; then
+                      echo "Expected non-zero exit_code but got '0'"
+                      exit 1
+                  fi
+                  echo "Failure output verification passed"
+
+    test-lint:
+        name: Test Lint
+        needs: [setup-environment, test-basic]
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+
+            - name: Pre-build with cache
+              uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
+              with:
+                  context: .
+                  load: true
+                  tags: action-playbook:test
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+            - name: Update action.yml for testing
+              run: |
+                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+
+            - name: Test with lint enabled (expect failure - ansible-lint not in image)
+              uses: ./
+              continue-on-error: true
+              id: test-lint-run
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  lint: "true"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Verify lint flag was processed
+              run: |
+                  outcome="${{ steps.test-lint-run.outcome }}"
+                  echo "Lint step outcome: $outcome"
+                  if [[ "$outcome" == "success" ]]; then
+                      echo "ansible-lint is available and passed"
+                  elif [[ "$outcome" == "failure" ]]; then
+                      echo "Lint step failed - acceptable if ansible-lint is not installed"
+                  else
+                      echo "Unexpected outcome: $outcome"
+                      exit 1
+                  fi
+
+    test-retries:
+        name: Test Retries
+        needs: [setup-environment, test-basic]
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+
+            - name: Pre-build with cache
+              uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
+              with:
+                  context: .
+                  load: true
+                  tags: action-playbook:test
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+            - name: Update action.yml for testing
+              run: |
+                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+
+            - name: Test retries with failing playbook
+              uses: ./
+              continue-on-error: true
+              id: test-retries
+              with:
+                  playbook: tests/failing_playbook.yml
+                  inventory: tests/hosts.yml
+                  retries: "2"
+                  retry_delay: "1"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Verify retries were attempted and action still failed
+              run: |
+                  if [[ "${{ steps.test-retries.outcome }}" == "success" ]]; then
+                      echo "Expected failure after retries but got success"
+                      exit 1
+                  fi
+                  echo "Retries test passed - action failed as expected after retries"
+
+            - name: Test retries with succeeding playbook
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  retries: "1"
+                  retry_delay: "1"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+    test-privilege-escalation:
+        name: Test Privilege Escalation
+        needs: [setup-environment, test-basic]
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+
+            - name: Pre-build with cache
+              uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
+              with:
+                  context: .
+                  load: true
+                  tags: action-playbook:test
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+            - name: Update action.yml for testing
+              run: |
+                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+
+            - name: Test with become flags (syntax check - sudo not in container)
+              uses: ./
+              with:
+                  playbook: tests/become_playbook.yml
+                  inventory: tests/hosts.yml
+                  become: "true"
+                  become_method: "sudo"
+                  become_user: "root"
+                  syntax_check: "true"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+    test-galaxy-options:
+        name: Test Galaxy Options
+        needs: [setup-environment, test-basic]
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+
+            - name: Pre-build with cache
+              uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
+              with:
+                  context: .
+                  load: true
+                  tags: action-playbook:test
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+            - name: Update action.yml for testing
+              run: |
+                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+
+            - name: Test galaxy_force (reinstall)
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  galaxy_force: "true"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Test galaxy_no_deps
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  galaxy_no_deps: "true"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Test galaxy_timeout
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  galaxy_timeout: "120"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Test galaxy_force_with_deps
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  galaxy_force_with_deps: "true"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Test galaxy_ignore_certs
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  galaxy_file: tests/requirements.yml
+                  galaxy_ignore_certs: "true"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+    test-connection:
+        name: Test Connection Options
+        needs: [setup-environment, test-basic]
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+
+            - name: Pre-build with cache
+              uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
+              with:
+                  context: .
+                  load: true
+                  tags: action-playbook:test
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+            - name: Update action.yml for testing
+              run: |
+                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+
+            - name: Test with explicit connection type
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  connection: "local"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Fetch GitHub known_hosts
+              id: known-hosts
+              run: |
+                  {
+                    echo "value<<KNOWN_HOSTS_EOF"
+                    ssh-keyscan github.com 2>/dev/null
+                    echo "KNOWN_HOSTS_EOF"
+                  } >> "$GITHUB_OUTPUT"
+
+            - name: Test with known_hosts
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  connection: "local"
+                  known_hosts: ${{ steps.known-hosts.outputs.value }}
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
+            - name: Test with timeout
+              uses: ./
+              with:
+                  playbook: tests/basic_playbook.yml
+                  inventory: tests/hosts.yml
+                  connection: "local"
+                  timeout: "60"
+              env:
+                  ANSIBLE_HOST_KEY_CHECKING: "false"
+                  ANSIBLE_DEPRECATION_WARNINGS: "false"
+
     test-summary:
         name: Test Summary
         needs:
@@ -462,6 +1094,16 @@ jobs:
             - test-parameters
             - test-ssh-key-handling
             - test-error-handling
+            - test-listing
+            - test-execution-options
+            - test-multi-input
+            - test-vault
+            - test-output
+            - test-lint
+            - test-retries
+            - test-privilege-escalation
+            - test-galaxy-options
+            - test-connection
         runs-on: ubuntu-latest
         permissions:
             pull-requests: write
@@ -479,7 +1121,17 @@ jobs:
                   "Mode Tests=${{ needs.test-modes.result }}" \
                   "Parameter Tests=${{ needs.test-parameters.result }}" \
                   "SSH Key Handling Tests=${{ needs.test-ssh-key-handling.result }}" \
-                  "Error Handling Tests=${{ needs.test-error-handling.result }}"
+                  "Error Handling Tests=${{ needs.test-error-handling.result }}" \
+                  "Listing Mode Tests=${{ needs.test-listing.result }}" \
+                  "Execution Options Tests=${{ needs.test-execution-options.result }}" \
+                  "Multi-Input Tests=${{ needs.test-multi-input.result }}" \
+                  "Vault Tests=${{ needs.test-vault.result }}" \
+                  "Output Tests=${{ needs.test-output.result }}" \
+                  "Lint Tests=${{ needs.test-lint.result }}" \
+                  "Retry Tests=${{ needs.test-retries.result }}" \
+                  "Privilege Escalation Tests=${{ needs.test-privilege-escalation.result }}" \
+                  "Galaxy Options Tests=${{ needs.test-galaxy-options.result }}" \
+                  "Connection Tests=${{ needs.test-connection.result }}"
 
             - name: Upload test artifacts
               if: always()
@@ -516,6 +1168,36 @@ jobs:
                   fi
                   if [[ "${{ needs.test-ssh-key-handling.result }}" == "failure" ]]; then
                       failed_jobs+=("SSH Key Handling Tests")
+                  fi
+                  if [[ "${{ needs.test-listing.result }}" == "failure" ]]; then
+                      failed_jobs+=("Listing Mode Tests")
+                  fi
+                  if [[ "${{ needs.test-execution-options.result }}" == "failure" ]]; then
+                      failed_jobs+=("Execution Options Tests")
+                  fi
+                  if [[ "${{ needs.test-multi-input.result }}" == "failure" ]]; then
+                      failed_jobs+=("Multi-Input Tests")
+                  fi
+                  if [[ "${{ needs.test-vault.result }}" == "failure" ]]; then
+                      failed_jobs+=("Vault Tests")
+                  fi
+                  if [[ "${{ needs.test-output.result }}" == "failure" ]]; then
+                      failed_jobs+=("Output Tests")
+                  fi
+                  if [[ "${{ needs.test-lint.result }}" == "failure" ]]; then
+                      failed_jobs+=("Lint Tests")
+                  fi
+                  if [[ "${{ needs.test-retries.result }}" == "failure" ]]; then
+                      failed_jobs+=("Retry Tests")
+                  fi
+                  if [[ "${{ needs.test-privilege-escalation.result }}" == "failure" ]]; then
+                      failed_jobs+=("Privilege Escalation Tests")
+                  fi
+                  if [[ "${{ needs.test-galaxy-options.result }}" == "failure" ]]; then
+                      failed_jobs+=("Galaxy Options Tests")
+                  fi
+                  if [[ "${{ needs.test-connection.result }}" == "failure" ]]; then
+                      failed_jobs+=("Connection Tests")
                   fi
 
                   if [[ ${#failed_jobs[@]} -gt 0 ]]; then

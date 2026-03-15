@@ -39,6 +39,7 @@ Thumbs.db
 .coverage
 .coverage.*
 htmlcov/
+tests/vault_vars.yml
 
 # Build
 *.tar.gz

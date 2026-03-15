@@ -1,0 +1,14 @@
+---
+- name: Privilege Escalation Test Playbook
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Run whoami to verify user
+      ansible.builtin.command: whoami
+      register: whoami_result
+      changed_when: false
+
+    - name: Display current user
+      ansible.builtin.debug:
+        msg: "Running as user: {{ whoami_result.stdout }}"

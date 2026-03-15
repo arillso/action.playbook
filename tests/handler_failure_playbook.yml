@@ -1,0 +1,20 @@
+---
+- name: Force Handlers Test Playbook
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  # force_handlers intentionally omitted — controlled by the action input
+  tasks:
+    - name: Trigger a handler
+      ansible.builtin.command: echo "triggering handler"
+      changed_when: true
+      notify: Test handler
+
+    - name: Failing task to test force_handlers
+      ansible.builtin.command: /bin/false
+      changed_when: false
+
+  handlers:
+    - name: Test handler
+      ansible.builtin.debug:
+        msg: "Handler was executed despite task failure"
