@@ -661,7 +661,9 @@ func (a *sshAgent) stop() {
 }
 
 // run is the main action for executing the playbooks.
-func run(ctx context.Context, c *cli.Command) error {
+func run(ctx context.Context, c *cli.Command) (execErr error) {
+	defer func() { writeActionOutputs(execErr) }()
+
 	// Normalize slice flags once to support both comma-separated and multiline inputs.
 	inventories := normalizeSlice(c.StringSlice("inventory"))
 	playbooks := normalizeSlice(c.StringSlice("playbook"))
@@ -783,5 +785,40 @@ func run(ctx context.Context, c *cli.Command) error {
 		},
 	}
 
-	return playbook.Exec(ctx)
+	execErr = playbook.Exec(ctx)
+	return execErr
+}
+
+// writeActionOutputs writes status and exit_code to $GITHUB_OUTPUT.
+func writeActionOutputs(execErr error) {
+	outputFile := os.Getenv("GITHUB_OUTPUT")
+	if outputFile == "" {
+		return
+	}
+
+	status := "success"
+	exitCode := 0
+	if execErr != nil {
+		status = "failed"
+		var ansibleErr *ansible.AnsibleError
+		if errors.As(execErr, &ansibleErr) {
+			exitCode = ansibleErr.ExitCode
+		} else {
+			exitCode = 1
+		}
+	}
+
+	f, err := os.OpenFile(outputFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Printf("Warning: could not write action outputs: %v", err)
+		return
+	}
+	defer func() {
+		if cerr := f.Close(); cerr != nil {
+			log.Printf("Warning: could not close action outputs file: %v", cerr)
+		}
+	}()
+	if _, err := fmt.Fprintf(f, "status=%s\nexit_code=%d\n", status, exitCode); err != nil {
+		log.Printf("Warning: could not write action outputs: %v", err)
+	}
 }
