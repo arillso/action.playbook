@@ -263,6 +263,11 @@ var appFlags = []cli.Flag{
 		Usage:   "Path to the file containing the SSH private key",
 		Sources: cli.EnvVars("ANSIBLE_PRIVATE_KEY_FILE", "INPUT_PRIVATE_KEY_FILE", "PLUGIN_PRIVATE_KEY_FILE"),
 	},
+	&cli.StringSliceFlag{
+		Name:    "additional-private-keys",
+		Usage:   "Additional SSH private keys to load into ssh-agent (multiline or comma-separated)",
+		Sources: cli.EnvVars("ANSIBLE_ADDITIONAL_PRIVATE_KEYS", "INPUT_ADDITIONAL_PRIVATE_KEYS", "PLUGIN_ADDITIONAL_PRIVATE_KEYS"),
+	},
 	&cli.StringFlag{
 		Name:    "user",
 		Aliases: []string{"u"},
@@ -663,6 +668,41 @@ func startSSHAgent(privateKey, passphrase string) (*sshAgent, error) {
 	return agent, nil
 }
 
+// addKey adds an additional private key (without passphrase) to a running agent.
+func (a *sshAgent) addKey(keyContent string) error {
+	tmpFile, err := os.CreateTemp("", "ssh-extra-key-")
+	if err != nil {
+		return fmt.Errorf("failed to create temp key file: %w", err)
+	}
+	keyPath := tmpFile.Name()
+
+	normalized := strings.ReplaceAll(keyContent, "\r\n", "\n")
+	if !strings.HasSuffix(normalized, "\n") {
+		normalized += "\n"
+	}
+
+	if _, err := tmpFile.WriteString(normalized); err != nil {
+		_ = tmpFile.Close()
+		_ = os.Remove(keyPath)
+		return fmt.Errorf("failed to write temp key file: %w", err)
+	}
+	if err := tmpFile.Close(); err != nil {
+		_ = os.Remove(keyPath)
+		return fmt.Errorf("failed to close temp key file: %w", err)
+	}
+
+	addCmd := exec.Command("ssh-add", keyPath)
+	addCmd.Env = append(os.Environ(), "SSH_AUTH_SOCK="+a.sock)
+	if out, err := addCmd.CombinedOutput(); err != nil {
+		_ = os.Remove(keyPath)
+		return fmt.Errorf("failed to add key to ssh-agent: %w: %s", err, string(out))
+	}
+
+	_ = os.Remove(keyPath)
+	log.Printf("Additional SSH key added to agent")
+	return nil
+}
+
 // stop kills the ssh-agent process.
 func (a *sshAgent) stop() {
 	if a == nil || a.pid == "" {
@@ -812,6 +852,7 @@ func run(ctx context.Context, c *cli.Command) (execErr error) {
 	// Start ssh-agent if a private key is provided, so that ProxyCommand
 	// and bastion host connections also have access to the key.
 	extraEnv := make(map[string]string)
+	additionalKeys := normalizeSlice(c.StringSlice("additional-private-keys"))
 	if privateKey := c.String("private-key"); privateKey != "" {
 		agent, err := startSSHAgent(privateKey, c.String("private-key-passphrase"))
 		if err != nil {
@@ -819,6 +860,15 @@ func run(ctx context.Context, c *cli.Command) (execErr error) {
 		}
 		defer agent.stop()
 		extraEnv["SSH_AUTH_SOCK"] = agent.sock
+
+		// Add any additional private keys to the same agent.
+		for i, key := range additionalKeys {
+			if err := agent.addKey(key); err != nil {
+				return fmt.Errorf("could not add additional SSH key %d: %w", i+1, err)
+			}
+		}
+	} else if len(additionalKeys) > 0 {
+		log.Printf("Warning: additional-private-keys provided but no primary private-key set; ignoring")
 	}
 
 	// If vault-password is provided but vault-password-file is not, write the
