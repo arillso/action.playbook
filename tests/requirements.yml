@@ -6,7 +6,9 @@ roles:
       src: arillso.users
 
 collections:
-    - name: sbaerlocher.virtualization
-      version: 0.0.2
-    - name: sbaerlocher.windows
-      version: 0.0.1
+    - name: arillso.system
+      version: 1.1.0
+    - name: arillso.container
+      version: 1.1.0
+    - name: arillso.agent
+      version: 1.1.0
