@@ -66,10 +66,10 @@ inputs:
 
     # Playbook Configuration
     inventory:
-        description: "Specifies one or more inventory host files for Ansible to use."
+        description: "One or more inventory host files. Supports comma-separated ('inv1.yml,inv2.yml') or multiline YAML syntax."
         required: true
     playbook:
-        description: "List of playbooks to apply."
+        description: "One or more playbooks to apply. Supports comma-separated ('play1.yml,play2.yml') or multiline YAML syntax."
         required: true
     limit:
         description: "Limits the playbook execution to a specific group of hosts."
@@ -84,10 +84,10 @@ inputs:
         description: "Executes only tasks and plays with specified tags."
         required: false
     extra_vars:
-        description: "Sets additional variables in a key=value format for the playbook."
+        description: "Additional variables in key=value format. Supports comma-separated or multiline YAML syntax for multiple values."
         required: false
     module_path:
-        description: "Prepends specified paths to the module library path list."
+        description: "Prepend directories to the module library path. Supports comma-separated or multiline YAML syntax for multiple paths."
         required: false
 
     # Execution Options
