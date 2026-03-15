@@ -158,6 +158,9 @@ inputs:
     private_key_passphrase:
         description: "Passphrase for the SSH private key. If provided, the passphrase is used to unlock the key when adding it to ssh-agent. Should be stored in a GitHub Secret."
         required: false
+    additional_private_keys:
+        description: "Additional SSH private keys to load into ssh-agent. Supports multiline YAML syntax for multiple keys. Requires private_key to be set."
+        required: false
     user:
         description: "Defines the username for making connections."
         required: false
