@@ -205,7 +205,7 @@ outputs:
 
 runs:
     using: "docker"
-    image: "docker://ghcr.io/arillso/action.playbook:0.5"
+    image: "docker://ghcr.io/arillso/action.playbook:0.5.0"
 branding:
     icon: "play-circle"
     color: "black"
