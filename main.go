@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -295,6 +296,11 @@ var appFlags = []cli.Flag{
 		Usage:   "Extra arguments passed exclusively to SSH",
 		Sources: cli.EnvVars("ANSIBLE_SSH_EXTRA_ARGS", "INPUT_SSH_EXTRA_ARGS", "PLUGIN_SSH_EXTRA_ARGS"),
 	},
+	&cli.StringFlag{
+		Name:    "known-hosts",
+		Usage:   "SSH known hosts entries for host key verification",
+		Sources: cli.EnvVars("ANSIBLE_KNOWN_HOSTS", "INPUT_KNOWN_HOSTS", "PLUGIN_KNOWN_HOSTS"),
+	},
 	&cli.BoolFlag{
 		Name:    "become",
 		Aliases: []string{"b"},
@@ -488,6 +494,24 @@ func validateParameters(inventories, playbooks []string, galaxyFile string) erro
 	return nil
 }
 
+// setupKnownHosts writes SSH known host entries to ~/.ssh/known_hosts.
+func setupKnownHosts(content string) error {
+	sshDir := filepath.Join(os.Getenv("HOME"), ".ssh")
+	if err := os.MkdirAll(sshDir, 0700); err != nil {
+		return fmt.Errorf("failed to create .ssh directory: %w", err)
+	}
+	normalized := strings.ReplaceAll(content, "\r\n", "\n")
+	if !strings.HasSuffix(normalized, "\n") {
+		normalized += "\n"
+	}
+	khPath := filepath.Join(sshDir, "known_hosts")
+	if err := os.WriteFile(khPath, []byte(normalized), 0600); err != nil {
+		return fmt.Errorf("failed to write known_hosts: %w", err)
+	}
+	log.Printf("Written %d known host entries", len(strings.Split(strings.TrimSpace(normalized), "\n")))
+	return nil
+}
+
 // sshAgent holds the state of a running ssh-agent process.
 type sshAgent struct {
 	sock string
@@ -636,6 +660,13 @@ func run(ctx context.Context, c *cli.Command) error {
 	// Create context with timeout.
 	ctx, cancel := context.WithTimeout(ctx, timeoutDuration)
 	defer cancel()
+
+	// Write known_hosts if provided.
+	if knownHosts := c.String("known-hosts"); knownHosts != "" {
+		if err := setupKnownHosts(knownHosts); err != nil {
+			return fmt.Errorf("could not setup known_hosts: %w", err)
+		}
+	}
 
 	// Start ssh-agent if a private key is provided, so that ProxyCommand
 	// and bastion host connections also have access to the key.

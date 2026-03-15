@@ -510,6 +510,59 @@ func TestStartSSHAgent_WrongPassphrase(t *testing.T) {
 	}
 }
 
+func TestSetupKnownHosts(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+
+	content := "github.com ssh-rsa AAAAB3...\ngitlab.com ssh-ed25519 AAAAC3..."
+	if err := setupKnownHosts(content); err != nil {
+		t.Fatalf("setupKnownHosts failed: %v", err)
+	}
+
+	khPath := filepath.Join(tmpDir, ".ssh", "known_hosts")
+	data, err := os.ReadFile(khPath)
+	if err != nil {
+		t.Fatalf("failed to read known_hosts: %v", err)
+	}
+	if !strings.Contains(string(data), "github.com") {
+		t.Error("expected github.com in known_hosts")
+	}
+	if !strings.Contains(string(data), "gitlab.com") {
+		t.Error("expected gitlab.com in known_hosts")
+	}
+
+	info, err := os.Stat(khPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode().Perm() != 0600 {
+		t.Errorf("expected 0600 permissions, got %o", info.Mode().Perm())
+	}
+
+	dirInfo, err := os.Stat(filepath.Join(tmpDir, ".ssh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if dirInfo.Mode().Perm() != 0700 {
+		t.Errorf("expected 0700 on .ssh dir, got %o", dirInfo.Mode().Perm())
+	}
+}
+
+func TestSetupKnownHosts_CRLF(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+
+	content := "host1 ssh-rsa AAA\r\nhost2 ssh-rsa BBB\r\n"
+	if err := setupKnownHosts(content); err != nil {
+		t.Fatalf("setupKnownHosts with CRLF failed: %v", err)
+	}
+
+	data, _ := os.ReadFile(filepath.Join(tmpDir, ".ssh", "known_hosts"))
+	if strings.Contains(string(data), "\r") {
+		t.Error("expected CRLF to be normalized to LF")
+	}
+}
+
 func TestSSHAgentStop_Nil(t *testing.T) {
 	// Calling stop on nil should not panic.
 	var agent *sshAgent

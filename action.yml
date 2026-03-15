@@ -156,6 +156,9 @@ inputs:
     ssh_extra_args:
         description: "Provides extra arguments to pass only to SSH."
         required: false
+    known_hosts:
+        description: "SSH known hosts entries for host key verification. Supports multiline YAML syntax."
+        required: false
 
     # Privilege Escalation
     become:
