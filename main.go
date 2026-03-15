@@ -783,5 +783,35 @@ func run(ctx context.Context, c *cli.Command) error {
 		},
 	}
 
-	return playbook.Exec(ctx)
+	execErr := playbook.Exec(ctx)
+	writeActionOutputs(execErr)
+	return execErr
+}
+
+// writeActionOutputs writes status and exit_code to $GITHUB_OUTPUT.
+func writeActionOutputs(execErr error) {
+	outputFile := os.Getenv("GITHUB_OUTPUT")
+	if outputFile == "" {
+		return
+	}
+
+	status := "success"
+	exitCode := 0
+	if execErr != nil {
+		status = "failed"
+		var ansibleErr *ansible.AnsibleError
+		if errors.As(execErr, &ansibleErr) {
+			exitCode = ansibleErr.ExitCode
+		} else {
+			exitCode = 1
+		}
+	}
+
+	f, err := os.OpenFile(outputFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Printf("Warning: could not write action outputs: %v", err)
+		return
+	}
+	defer func() { _ = f.Close() }()
+	_, _ = fmt.Fprintf(f, "status=%s\nexit_code=%d\n", status, exitCode)
 }

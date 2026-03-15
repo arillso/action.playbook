@@ -175,6 +175,12 @@ inputs:
         description: "Sets the user to impersonate when using privilege escalation."
         required: false
 
+outputs:
+    status:
+        description: "Execution status: 'success' or 'failed'"
+    exit_code:
+        description: "Ansible exit code (0=success, 2=host failed, 4=unreachable)"
+
 runs:
     using: "docker"
     image: "docker://ghcr.io/arillso/action.playbook:0.4"

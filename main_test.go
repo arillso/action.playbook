@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -561,6 +562,46 @@ func TestSetupKnownHosts_CRLF(t *testing.T) {
 	if strings.Contains(string(data), "\r") {
 		t.Error("expected CRLF to be normalized to LF")
 	}
+}
+
+func TestWriteActionOutputs_Success(t *testing.T) {
+	tmpFile := filepath.Join(t.TempDir(), "output")
+	t.Setenv("GITHUB_OUTPUT", tmpFile)
+
+	writeActionOutputs(nil)
+
+	data, err := os.ReadFile(tmpFile)
+	if err != nil {
+		t.Fatalf("failed to read output: %v", err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "status=success") {
+		t.Errorf("expected status=success, got: %s", content)
+	}
+	if !strings.Contains(content, "exit_code=0") {
+		t.Errorf("expected exit_code=0, got: %s", content)
+	}
+}
+
+func TestWriteActionOutputs_Failed(t *testing.T) {
+	tmpFile := filepath.Join(t.TempDir(), "output")
+	t.Setenv("GITHUB_OUTPUT", tmpFile)
+
+	writeActionOutputs(fmt.Errorf("some error"))
+
+	data, _ := os.ReadFile(tmpFile)
+	content := string(data)
+	if !strings.Contains(content, "status=failed") {
+		t.Errorf("expected status=failed, got: %s", content)
+	}
+	if !strings.Contains(content, "exit_code=1") {
+		t.Errorf("expected exit_code=1, got: %s", content)
+	}
+}
+
+func TestWriteActionOutputs_NoEnvVar(t *testing.T) {
+	t.Setenv("GITHUB_OUTPUT", "")
+	writeActionOutputs(nil)
 }
 
 func TestSSHAgentStop_Nil(t *testing.T) {
