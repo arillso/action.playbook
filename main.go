@@ -660,6 +660,25 @@ func (a *sshAgent) stop() {
 	}
 }
 
+// defaultGalaxyFiles lists common Galaxy requirements filenames to search for
+// when no explicit galaxy-file is provided.
+var defaultGalaxyFiles = []string{
+	"requirements.yml",
+	"requirements.yaml",
+}
+
+// detectGalaxyFile returns the first existing file from defaultGalaxyFiles,
+// or an empty string if none are found. dir specifies the directory to search in.
+func detectGalaxyFile(dir string) string {
+	for _, name := range defaultGalaxyFiles {
+		if _, err := os.Stat(filepath.Join(dir, name)); err == nil {
+			log.Printf("Auto-detected Galaxy requirements file: %s", name)
+			return name
+		}
+	}
+	return ""
+}
+
 // run is the main action for executing the playbooks.
 func run(ctx context.Context, c *cli.Command) (execErr error) {
 	defer func() { writeActionOutputs(execErr) }()
@@ -670,8 +689,14 @@ func run(ctx context.Context, c *cli.Command) (execErr error) {
 	extraVars := normalizeSlice(c.StringSlice("extra-vars"))
 	modulePath := normalizeSlice(c.StringSlice("module-path"))
 
+	// Auto-detect Galaxy file if not explicitly provided.
+	galaxyFile := c.String("galaxy-file")
+	if galaxyFile == "" {
+		galaxyFile = detectGalaxyFile(".")
+	}
+
 	// Validate parameters using the already-normalized slices.
-	if err := validateParameters(inventories, playbooks, c.String("galaxy-file")); err != nil {
+	if err := validateParameters(inventories, playbooks, galaxyFile); err != nil {
 		return err
 	}
 
@@ -707,7 +732,7 @@ func run(ctx context.Context, c *cli.Command) (execErr error) {
 	playbook := &ansible.Playbook{
 		Config: ansible.Config{
 			// Galaxy-related configuration.
-			GalaxyFile:                        c.String("galaxy-file"),
+			GalaxyFile:                        galaxyFile,
 			GalaxyForce:                       c.Bool("galaxy-force"),
 			GalaxyAPIKey:                      c.String("galaxy-api-key"),
 			GalaxyAPIServerURL:                c.String("galaxy-api-server-url"),
