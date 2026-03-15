@@ -616,6 +616,25 @@ func (a *sshAgent) stop() {
 	}
 }
 
+// defaultGalaxyFiles lists common Galaxy requirements filenames to search for
+// when no explicit galaxy-file is provided.
+var defaultGalaxyFiles = []string{
+	"requirements.yml",
+	"requirements.yaml",
+}
+
+// detectGalaxyFile returns the first existing file from defaultGalaxyFiles,
+// or an empty string if none are found.
+func detectGalaxyFile() string {
+	for _, name := range defaultGalaxyFiles {
+		if _, err := os.Stat(name); err == nil {
+			log.Printf("Auto-detected Galaxy requirements file: %s", name)
+			return name
+		}
+	}
+	return ""
+}
+
 // run is the main action for executing the playbooks.
 func run(ctx context.Context, c *cli.Command) error {
 	// Normalize slice flags once to support both comma-separated and multiline inputs.
@@ -624,8 +643,14 @@ func run(ctx context.Context, c *cli.Command) error {
 	extraVars := normalizeSlice(c.StringSlice("extra-vars"))
 	modulePath := normalizeSlice(c.StringSlice("module-path"))
 
+	// Auto-detect Galaxy file if not explicitly provided.
+	galaxyFile := c.String("galaxy-file")
+	if galaxyFile == "" {
+		galaxyFile = detectGalaxyFile()
+	}
+
 	// Validate parameters using the already-normalized slices.
-	if err := validateParameters(inventories, playbooks, c.String("galaxy-file")); err != nil {
+	if err := validateParameters(inventories, playbooks, galaxyFile); err != nil {
 		return err
 	}
 
@@ -654,7 +679,7 @@ func run(ctx context.Context, c *cli.Command) error {
 	playbook := &ansible.Playbook{
 		Config: ansible.Config{
 			// Galaxy-related configuration.
-			GalaxyFile:                        c.String("galaxy-file"),
+			GalaxyFile:                        galaxyFile,
 			GalaxyForce:                       c.Bool("galaxy-force"),
 			GalaxyAPIKey:                      c.String("galaxy-api-key"),
 			GalaxyAPIServerURL:                c.String("galaxy-api-server-url"),
