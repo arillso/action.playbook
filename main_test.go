@@ -738,3 +738,27 @@ func TestDetectGalaxyFile_NotFound(t *testing.T) {
 		t.Errorf("expected empty string, got %q", result)
 	}
 }
+
+func TestCreateVaultPasswordFile(t *testing.T) {
+	path, err := createVaultPasswordFile("s3cret!")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	defer func() { _ = os.Remove(path) }()
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("failed to read file: %v", err)
+	}
+	if string(data) != "s3cret!\n" {
+		t.Errorf("expected 's3cret!\\n', got %q", string(data))
+	}
+
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatalf("failed to stat file: %v", err)
+	}
+	if info.Mode().Perm() != 0600 {
+		t.Errorf("expected permissions 0600, got %o", info.Mode().Perm())
+	}
+}

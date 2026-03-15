@@ -679,6 +679,31 @@ func detectGalaxyFile(dir string) string {
 	return ""
 }
 
+// createVaultPasswordFile writes the vault password to a secure temporary file
+// and returns the file path. The caller is responsible for removing the file.
+func createVaultPasswordFile(password string) (string, error) {
+	f, err := os.CreateTemp("", "vault-pass-")
+	if err != nil {
+		return "", fmt.Errorf("failed to create vault password file: %w", err)
+	}
+	path := f.Name()
+
+	if _, err := f.WriteString(password + "\n"); err != nil {
+		_ = f.Close()
+		_ = os.Remove(path)
+		return "", fmt.Errorf("failed to write vault password file: %w", err)
+	}
+	if err := f.Close(); err != nil {
+		_ = os.Remove(path)
+		return "", fmt.Errorf("failed to close vault password file: %w", err)
+	}
+	if err := os.Chmod(path, 0600); err != nil {
+		_ = os.Remove(path)
+		return "", fmt.Errorf("failed to set vault password file permissions: %w", err)
+	}
+	return path, nil
+}
+
 // run is the main action for executing the playbooks.
 func run(ctx context.Context, c *cli.Command) (execErr error) {
 	defer func() { writeActionOutputs(execErr) }()
@@ -727,6 +752,22 @@ func run(ctx context.Context, c *cli.Command) (execErr error) {
 		extraEnv["SSH_AUTH_SOCK"] = agent.sock
 	}
 
+	// If vault-password is provided but vault-password-file is not, write the
+	// password to a secure temp file so Ansible reads it from disk instead of
+	// receiving it via command line arguments (which may appear in /proc).
+	vaultPassword := c.String("vault-password")
+	vaultPasswordFile := c.String("vault-password-file")
+	if vaultPassword != "" && vaultPasswordFile == "" {
+		path, err := createVaultPasswordFile(vaultPassword)
+		if err != nil {
+			return fmt.Errorf("could not create vault password file: %w", err)
+		}
+		defer func() { _ = os.Remove(path) }()
+		vaultPasswordFile = path
+		vaultPassword = "" // avoid also passing via CLI arg
+		log.Printf("Vault password written to temporary file")
+	}
+
 	log.Printf("Starting Ansible playbook execution with %d playbooks", len(playbooks))
 
 	playbook := &ansible.Playbook{
@@ -772,7 +813,7 @@ func run(ctx context.Context, c *cli.Command) (execErr error) {
 
 			// Vault and authentication configuration.
 			VaultID:            c.String("vault-id"),
-			VaultPassword:      c.String("vault-password"),
+			VaultPassword:      vaultPassword,
 			Verbose:            c.Int("verbose"),
 			PrivateKey:         c.String("private-key"),
 			PrivateKeyFile:     c.String("private-key-file"),
@@ -792,7 +833,7 @@ func run(ctx context.Context, c *cli.Command) (execErr error) {
 			SSHTransferMethod:  c.String("ssh-transfer-method"),
 			NoColor:            c.Bool("no-color"),
 			OutputCallback:     c.String("output-callback"),
-			VaultPasswordFile:  c.String("vault-password-file"),
+			VaultPasswordFile:  vaultPasswordFile,
 			AskVaultPass:       c.Bool("ask-vault-pass"),
 			FactPath:           c.String("fact-path"),
 			FactCaching:        c.String("fact-caching"),
