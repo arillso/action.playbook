@@ -5,20 +5,21 @@
 # (>= v8.19 for the `git --staged` subcommand), actionlint.
 #
 # Stack: Go GitHub Action. Adapted from arillso/ansible.system, with
-# ansible-lint swapped for gofmt + golangci-lint.
+# ansible-lint swapped for gofmt + golangci-lint. No prettier: yamllint and
+# markdownlint already cover yml/md, and the repo's 4-space YAML/.editorconfig
+# conventions diverge from Prettier's defaults.
 
 pre-commit:
     parallel: true
     commands:
         gofmt:
             glob: "*.go"
-            run: gofmt -l {staged_files}
+            # gofmt -l only prints unformatted files and still exits 0, so the
+            # commit must be blocked explicitly when the list is non-empty.
+            run: test -z "$(gofmt -l {staged_files})"
         golangci-lint:
             glob: "*.go"
             run: golangci-lint run
-        prettier:
-            glob: "*.{json,yml,yaml,md}"
-            run: npx --yes -- prettier --check {staged_files}
         yamllint:
             glob: "*.{yml,yaml}"
             run: yamllint -c .yamllint.yml {staged_files}
@@ -37,4 +38,4 @@ pre-push:
         gitleaks-full:
             run: gitleaks git --redact --no-banner
         go-test:
-            run: go test ./...
+            run: go test -race ./...
