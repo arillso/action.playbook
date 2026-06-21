@@ -903,6 +903,53 @@ func runAnsibleLint(ctx context.Context, playbooks []string) error {
 }
 
 // run is the main action for executing the playbooks.
+// numericBound describes the accepted range for an integer action input.
+// min/max are inclusive. warnAbove (when > 0) logs a warning for values that
+// are technically valid but almost certainly a misconfiguration.
+type numericBound struct {
+	flag      string
+	min       int
+	max       int
+	warnAbove int
+}
+
+// numericBounds lists the validation rules for every integer input. Timeouts
+// must be at least 1 (a zero execution-timeout would cancel the context
+// immediately); counters and delays must be non-negative.
+// For the optional ansible timeouts a value of 0 means "unset — use ansible's
+// own default", so their minimum is 0. execution-timeout drives the action's
+// own context and must be at least 1 (its default is 30); forks defaults to 5.
+var numericBounds = []numericBound{
+	{flag: "execution-timeout", min: 1, max: 1440, warnAbove: 360}, // minutes (<= 24h)
+	{flag: "forks", min: 1, max: 1000, warnAbove: 100},             // parallelism (default 5)
+	{flag: "timeout", min: 0, max: 3600, warnAbove: 600},           // connection seconds (0 = ansible default)
+	{flag: "galaxy-timeout", min: 0, max: 3600, warnAbove: 600},    // seconds (0 = ansible default)
+	{flag: "fact-caching-timeout", min: 0, max: 31536000},          // seconds (0 = no expiry)
+	{flag: "gather-timeout", min: 0, max: 3600, warnAbove: 600},    // seconds (0 = ansible default)
+	{flag: "poll-interval", min: 0, max: 3600},                     // seconds (0 = ansible default)
+	{flag: "retries", min: 0, max: 100, warnAbove: 20},             // attempts (0 = no retries)
+	{flag: "retry-delay", min: 0, max: 3600, warnAbove: 600},       // seconds
+	{flag: "verbose", min: 0, max: 4},                              // -v .. -vvvv
+	{flag: "max-fail-percentage", min: 0, max: 100},                // percent
+}
+
+// validateNumericInputs enforces numericBounds for every integer flag that was
+// set, returning an error for out-of-range values and logging a warning for
+// suspiciously large but valid ones. Flags left at their default are skipped so
+// a default of 0 (e.g. retries) does not trip a min of 1 it does not have.
+func validateNumericInputs(c *cli.Command) error {
+	for _, b := range numericBounds {
+		v := c.Int(b.flag)
+		if v < b.min || v > b.max {
+			return fmt.Errorf("invalid value for --%s: %d (must be between %d and %d)", b.flag, v, b.min, b.max)
+		}
+		if b.warnAbove > 0 && v > b.warnAbove {
+			log.Printf("WARNING: --%s is set to %d, which is unusually high (> %d) — double-check this is intended", b.flag, v, b.warnAbove)
+		}
+	}
+	return nil
+}
+
 func run(ctx context.Context, c *cli.Command) (execErr error) {
 	defer func() { writeActionOutputs(execErr) }()
 
@@ -923,6 +970,11 @@ func run(ctx context.Context, c *cli.Command) (execErr error) {
 		return err
 	}
 
+	// Validate numeric inputs (bounds, non-negative, sane maxima).
+	if err := validateNumericInputs(c); err != nil {
+		return err
+	}
+
 	// Run ansible-lint if requested.
 	if c.Bool("lint") {
 		if err := runAnsibleLint(ctx, playbooks); err != nil {
@@ -930,9 +982,10 @@ func run(ctx context.Context, c *cli.Command) (execErr error) {
 		}
 	}
 
-	// Set execution timeout based on flag.
+	// Set execution timeout based on flag. validateNumericInputs guarantees a
+	// minimum of 1 minute, so the context can never be created already-expired.
 	timeoutDuration := time.Duration(c.Int("execution-timeout")) * time.Minute
-	log.Printf("Setting execution timeout to %v minutes", c.Int("execution-timeout"))
+	log.Printf("Setting execution timeout to %d minute(s)", c.Int("execution-timeout"))
 
 	// Create context with timeout.
 	ctx, cancel := context.WithTimeout(ctx, timeoutDuration)
