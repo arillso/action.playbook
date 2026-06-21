@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -566,6 +567,32 @@ type sshAgent struct {
 	pid  string
 }
 
+// validateAgentSock checks that an SSH_AUTH_SOCK value parsed from ssh-agent
+// output has the expected shape: a non-empty absolute path with no embedded
+// newline or NUL byte (which could smuggle extra environment entries or break
+// the child-process env block).
+func validateAgentSock(sock string) error {
+	if strings.ContainsAny(sock, "\n\r\x00") {
+		return fmt.Errorf("contains a newline or NUL byte")
+	}
+	if !strings.HasPrefix(sock, "/") {
+		return fmt.Errorf("not an absolute path: %q", sock)
+	}
+	return nil
+}
+
+// validateAgentPID checks that an SSH_AGENT_PID value is a positive integer.
+func validateAgentPID(pid string) error {
+	n, err := strconv.Atoi(pid)
+	if err != nil {
+		return fmt.Errorf("not an integer: %q", pid)
+	}
+	if n <= 0 {
+		return fmt.Errorf("not a positive PID: %d", n)
+	}
+	return nil
+}
+
 // startSSHAgent starts an ssh-agent, adds the given private key, and returns
 // the agent state for cleanup. The key content is written to a temporary file
 // which is removed immediately after being added to the agent.
@@ -592,6 +619,20 @@ func startSSHAgent(privateKey, passphrase string) (*sshAgent, error) {
 
 	if agent.sock == "" {
 		return nil, fmt.Errorf("failed to parse SSH_AUTH_SOCK from ssh-agent output")
+	}
+
+	// Validate the parsed values before they are exported into the environment
+	// or used as a PID. ssh-agent is a trusted local process, but the output is
+	// passed straight into child-process env / signals, so enforce the expected
+	// shape as defence in depth (no newlines/NUL, socket is an absolute path,
+	// PID is a positive integer).
+	if err := validateAgentSock(agent.sock); err != nil {
+		return nil, fmt.Errorf("invalid SSH_AUTH_SOCK from ssh-agent: %w", err)
+	}
+	if agent.pid != "" {
+		if err := validateAgentPID(agent.pid); err != nil {
+			return nil, fmt.Errorf("invalid SSH_AGENT_PID from ssh-agent: %w", err)
+		}
 	}
 
 	// Write private key to a temporary file for ssh-add.
@@ -631,11 +672,16 @@ func startSSHAgent(privateKey, passphrase string) (*sshAgent, error) {
 			return nil, fmt.Errorf("failed to create askpass script: %w", err)
 		}
 		askpassPath := askpassScript.Name()
-		// The script outputs the passphrase once, then exits with error on retries
+		// The script reads the passphrase from an environment variable rather
+		// than having it interpolated into the script body. This avoids any
+		// shell-escaping/injection concern: the passphrase never appears as a
+		// shell token, only as $ANSIBLE_ASKPASS_VALUE which the shell expands
+		// as data. It outputs the value once, then exits with error on retries
 		// to prevent ssh-add from looping indefinitely on wrong passphrases.
 		flagFile := askpassPath + ".used"
-		scriptContent := fmt.Sprintf("#!/bin/sh\nif [ -f '%s' ]; then exit 1; fi\ntouch '%s'\necho '%s'\n",
-			flagFile, flagFile, strings.ReplaceAll(passphrase, "'", "'\\''"))
+		scriptContent := fmt.Sprintf(
+			"#!/bin/sh\nif [ -f '%s' ]; then exit 1; fi\ntouch '%s'\nprintf '%%s\\n' \"$ANSIBLE_ASKPASS_VALUE\"\n",
+			flagFile, flagFile)
 		if _, err := askpassScript.WriteString(scriptContent); err != nil {
 			_ = askpassScript.Close()
 			_ = os.Remove(askpassPath)
@@ -652,6 +698,7 @@ func startSSHAgent(privateKey, passphrase string) (*sshAgent, error) {
 			"SSH_ASKPASS="+askpassPath,
 			"SSH_ASKPASS_REQUIRE=force",
 			"DISPLAY=",
+			"ANSIBLE_ASKPASS_VALUE="+passphrase,
 		)
 		// Detach from controlling TTY so ssh-add uses SSH_ASKPASS.
 		addCmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}

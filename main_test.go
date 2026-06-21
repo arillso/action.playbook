@@ -941,3 +941,48 @@ func TestSplitPEMKeys_SeparateValues(t *testing.T) {
 		t.Fatalf("expected 2 keys, got %d", len(keys))
 	}
 }
+
+func TestValidateAgentSock(t *testing.T) {
+	tests := []struct {
+		name    string
+		sock    string
+		wantErr bool
+	}{
+		{"valid absolute path", "/tmp/ssh-XXXX/agent.123", false},
+		{"relative path", "tmp/agent.sock", true},
+		{"empty", "", true},
+		{"embedded newline", "/tmp/agent\nFOO=bar", true},
+		{"embedded NUL", "/tmp/agent\x00", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateAgentSock(tt.sock)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateAgentSock(%q) error = %v, wantErr %v", tt.sock, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateAgentPID(t *testing.T) {
+	tests := []struct {
+		name    string
+		pid     string
+		wantErr bool
+	}{
+		{"valid pid", "12345", false},
+		{"zero", "0", true},
+		{"negative", "-1", true},
+		{"non-numeric", "12a", true},
+		{"empty", "", true},
+		{"newline injection", "123\nFOO", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateAgentPID(tt.pid)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateAgentPID(%q) error = %v, wantErr %v", tt.pid, err, tt.wantErr)
+			}
+		})
+	}
+}
