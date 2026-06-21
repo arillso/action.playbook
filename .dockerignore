@@ -1,0 +1,38 @@
+# The Dockerfile does `COPY . .`, so keep the build context lean — exclude
+# VCS, CI, docs and local tooling that the Go build does not need.
+
+# VCS and CI
+.git/
+.github/
+.gitignore
+.gitattributes
+
+# Docs and meta
+*.md
+LICENSE
+AGENTS.md
+CLAUDE.md
+REVIEW.md
+CONTRIBUTING.md
+
+# Lint / tooling configs
+.editorconfig
+.yamllint.yml
+.markdownlint.json
+.gitleaks.toml
+.secretlintrc.json
+.trivy.yaml
+.golangci.yml
+lefthook.yml
+
+# Tests and local artifacts
+tests/
+test-results/
+coverage.out
+coverage.html
+*.test
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store

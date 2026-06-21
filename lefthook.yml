@@ -1,0 +1,41 @@
+---
+# Lefthook git hooks — run `lefthook install` once after cloning.
+# Tools without a system binary are installed on-demand via `npx --yes`.
+# System binaries: gofmt (from Go), golangci-lint, yamllint, gitleaks
+# (>= v8.19 for the `git --staged` subcommand), actionlint.
+#
+# Stack: Go GitHub Action. Adapted from arillso/ansible.system, with
+# ansible-lint swapped for gofmt + golangci-lint. No prettier: yamllint and
+# markdownlint already cover yml/md, and the repo's 4-space YAML/.editorconfig
+# conventions diverge from Prettier's defaults.
+
+pre-commit:
+    parallel: true
+    commands:
+        gofmt:
+            glob: "*.go"
+            # gofmt -l only prints unformatted files and still exits 0, so the
+            # commit must be blocked explicitly when the list is non-empty.
+            run: test -z "$(gofmt -l {staged_files})"
+        golangci-lint:
+            glob: "*.go"
+            run: golangci-lint run
+        yamllint:
+            glob: "*.{yml,yaml}"
+            run: yamllint -c .yamllint.yml {staged_files}
+        markdownlint:
+            glob: "*.md"
+            run: npx --yes -- markdownlint-cli2 {staged_files}
+        actionlint:
+            glob: ".github/workflows/*.{yml,yaml}"
+            run: actionlint {staged_files}
+        gitleaks:
+            run: gitleaks git --staged --redact --no-banner
+
+pre-push:
+    parallel: true
+    commands:
+        gitleaks-full:
+            run: gitleaks git --redact --no-banner
+        go-test:
+            run: go test -race ./...
