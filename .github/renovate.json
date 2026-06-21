@@ -6,7 +6,7 @@
             "description": "Alpine packages (repology)",
             "matchManagers": ["custom.regex"],
             "matchDatasources": ["repology"],
-            "matchPackageNames": ["/^alpine_3_21\\//"],
+            "matchPackageNames": ["/^alpine_3_24\\//"],
             "groupName": "Alpine packages"
         }
     ],
@@ -19,7 +19,7 @@
             ],
             "versioningTemplate": "loose",
             "datasourceTemplate": "repology",
-            "packageNameTemplate": "alpine_3_21/{{depName}}"
+            "packageNameTemplate": "alpine_3_24/{{depName}}"
         }
     ]
 }
