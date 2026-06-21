@@ -986,3 +986,39 @@ func TestValidateAgentPID(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateNumericInputs(t *testing.T) {
+	tmpDir := t.TempDir()
+	pbFlag := createTempFile(t, tmpDir, "pb.yml", "---\n- hosts: all\n")
+	invFlag := createTempFile(t, tmpDir, "inv.yml", "all:\n  hosts:\n    localhost:\n")
+	tests := []struct {
+		name    string
+		args    []string
+		wantErr bool
+	}{
+		{"defaults are valid", []string{"test", "--playbook", pbFlag, "--inventory", invFlag}, false},
+		{"execution-timeout zero rejected", []string{"test", "--playbook", pbFlag, "--inventory", invFlag, "--execution-timeout", "0"}, true},
+		{"execution-timeout negative rejected", []string{"test", "--playbook", pbFlag, "--inventory", invFlag, "--execution-timeout", "-5"}, true},
+		{"execution-timeout too high rejected", []string{"test", "--playbook", pbFlag, "--inventory", invFlag, "--execution-timeout", "5000"}, true},
+		{"execution-timeout valid", []string{"test", "--playbook", pbFlag, "--inventory", invFlag, "--execution-timeout", "60"}, false},
+		{"retry-delay negative rejected", []string{"test", "--playbook", pbFlag, "--inventory", invFlag, "--retry-delay", "-1"}, true},
+		{"retry-delay zero allowed", []string{"test", "--playbook", pbFlag, "--inventory", invFlag, "--retry-delay", "0"}, false},
+		{"retries negative rejected", []string{"test", "--playbook", pbFlag, "--inventory", invFlag, "--retries", "-1"}, true},
+		{"forks zero rejected", []string{"test", "--playbook", pbFlag, "--inventory", invFlag, "--forks", "0"}, true},
+		{"forks valid", []string{"test", "--playbook", pbFlag, "--inventory", invFlag, "--forks", "10"}, false},
+		{"optional timeout zero allowed", []string{"test", "--playbook", pbFlag, "--inventory", invFlag, "--timeout", "0"}, false},
+		{"verbose out of range rejected", []string{"test", "--playbook", pbFlag, "--inventory", invFlag, "--verbose", "9"}, true},
+		{"max-fail-percentage over 100 rejected", []string{"test", "--playbook", pbFlag, "--inventory", invFlag, "--max-fail-percentage", "150"}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := newTestCommand(func(ctx context.Context, c *cli.Command) error {
+				return validateNumericInputs(c)
+			})
+			err := cmd.Run(context.Background(), tt.args)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("args %v: error = %v, wantErr %v", tt.args, err, tt.wantErr)
+			}
+		})
+	}
+}

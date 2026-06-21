@@ -3,15 +3,15 @@ description: "Github Action for running Ansible Playbooks with advanced configur
 
 inputs:
     execution_timeout:
-        description: "Timeout in minutes for the playbook execution (default: 30)."
+        description: "Timeout in minutes for the playbook execution (1-1440, default: 30)."
         required: false
         default: "30"
     retries:
-        description: "Number of times to retry on failure (0 = no retries, default: 0)."
+        description: "Number of times to retry on failure (0-100, 0 = no retries, default: 0)."
         required: false
         default: "0"
     retry_delay:
-        description: "Delay in seconds between retries (default: 30)."
+        description: "Delay in seconds between retries (0-3600, default: 30)."
         required: false
         default: "30"
 
@@ -139,7 +139,7 @@ inputs:
         description: "Performs a syntax check on the playbook, without executing it."
         required: false
     forks:
-        description: "Defines the number of parallel processes to use during playbook execution."
+        description: "Defines the number of parallel processes to use during playbook execution (1-1000, default: 5)."
         required: false
 
     # Authentication and Vault
