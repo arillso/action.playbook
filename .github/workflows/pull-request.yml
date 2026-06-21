@@ -1,22 +1,23 @@
-name: Action Tests
+---
+name: Pull Request
+run-name: Pull Request by @${{ github.actor }}
 
 on:
-    push:
-        branches:
-            - "main"
-        paths-ignore:
-            - "README.md"
-            - "LICENSE"
-            - ".github/*.md"
-            - "docs/**"
     pull_request:
-        branches:
-            - "main"
+        branches: [main]
+        types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
 
 permissions:
     contents: read
     security-events: write
+    actions: read
     pull-requests: write
+    issues: read
+    id-token: write
 
 env:
     ANSIBLE_HOST_KEY_CHECKING: "false"
@@ -25,11 +26,23 @@ env:
     PY_COLORS: "1"
     GOPROXY: "https://proxy.golang.org,direct"
 
-concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
-
 jobs:
+    ci:
+        uses: arillso/.github/.github/workflows/ci-go.yml@2026-06-14
+
+    lint:
+        uses: arillso/.github/.github/workflows/ci-lint.yml@2026-06-14
+        with:
+            enable_shellcheck: true
+
+    security-secrets:
+        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-06-14
+
+    claude-review:
+        uses: arillso/.github/.github/workflows/ai-claude-review.yml@2026-06-14
+        secrets:
+            CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
     setup-environment:
         name: Setup Environment
         runs-on: ubuntu-latest
