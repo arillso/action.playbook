@@ -920,23 +920,25 @@ type numericBound struct {
 // own default", so their minimum is 0. execution-timeout drives the action's
 // own context and must be at least 1 (its default is 30); forks defaults to 5.
 var numericBounds = []numericBound{
-	{flag: "execution-timeout", min: 1, max: 1440, warnAbove: 360}, // minutes (<= 24h)
-	{flag: "forks", min: 1, max: 1000, warnAbove: 100},             // parallelism (default 5)
-	{flag: "timeout", min: 0, max: 3600, warnAbove: 600},           // connection seconds (0 = ansible default)
-	{flag: "galaxy-timeout", min: 0, max: 3600, warnAbove: 600},    // seconds (0 = ansible default)
-	{flag: "fact-caching-timeout", min: 0, max: 31536000},          // seconds (0 = no expiry)
-	{flag: "gather-timeout", min: 0, max: 3600, warnAbove: 600},    // seconds (0 = ansible default)
-	{flag: "poll-interval", min: 0, max: 3600},                     // seconds (0 = ansible default)
-	{flag: "retries", min: 0, max: 100, warnAbove: 20},             // attempts (0 = no retries)
-	{flag: "retry-delay", min: 0, max: 3600, warnAbove: 600},       // seconds
-	{flag: "verbose", min: 0, max: 4},                              // -v .. -vvvv
-	{flag: "max-fail-percentage", min: 0, max: 100},                // percent
+	{flag: "execution-timeout", min: 1, max: 1440, warnAbove: 360},    // minutes (<= 24h)
+	{flag: "forks", min: 1, max: 1000, warnAbove: 100},                // parallelism (default 5)
+	{flag: "timeout", min: 0, max: 3600, warnAbove: 600},              // connection seconds (0 = ansible default)
+	{flag: "galaxy-timeout", min: 0, max: 3600, warnAbove: 600},       // seconds (0 = ansible default)
+	{flag: "fact-caching-timeout", min: 0, max: 31536000},             // seconds (0 = no expiry)
+	{flag: "gather-timeout", min: 0, max: 3600, warnAbove: 600},       // seconds (0 = ansible default)
+	{flag: "poll-interval", min: 0, max: 3600},                        // seconds (0 = ansible default)
+	{flag: "retries", min: 0, max: 100, warnAbove: 20},                // attempts (0 = no retries)
+	{flag: "retry-delay", min: 0, max: 3600, warnAbove: 600},          // seconds
+	{flag: "verbose", min: 0, max: 4},                                 // -v .. -vvvv
+	{flag: "max-fail-percentage", min: 0, max: 100},                   // percent
+	{flag: "galaxy-required-valid-signature-count", min: 0, max: 100}, // GPG signatures (0 = unset)
 }
 
-// validateNumericInputs enforces numericBounds for every integer flag that was
-// set, returning an error for out-of-range values and logging a warning for
-// suspiciously large but valid ones. Flags left at their default are skipped so
-// a default of 0 (e.g. retries) does not trip a min of 1 it does not have.
+// validateNumericInputs enforces numericBounds for every integer flag in the
+// table, returning an error for out-of-range values and logging a warning for
+// suspiciously large but valid ones. Every entry is checked unconditionally;
+// each flag's default sits within its own bound (e.g. retries defaults to 0 and
+// has min 0), so unset flags pass without a special skip.
 func validateNumericInputs(c *cli.Command) error {
 	for _, b := range numericBounds {
 		v := c.Int(b.flag)
