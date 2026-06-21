@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
     codeql:
-        uses: arillso/.github/.github/workflows/security-codeql.yml@2026-06-14
+        uses: arillso/.github/.github/workflows/security-codeql.yml@2026-06-18
 
     prepare:
         runs-on: ubuntu-latest
