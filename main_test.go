@@ -1022,3 +1022,92 @@ func TestValidateNumericInputs(t *testing.T) {
 		})
 	}
 }
+
+// genTestSSHKey generates an ed25519 key pair and returns the private key PEM.
+func genTestSSHKey(t *testing.T, name string) string {
+	t.Helper()
+	keyFile := filepath.Join(t.TempDir(), name)
+	cmd := exec.Command("ssh-keygen", "-t", "ed25519", "-f", keyFile, "-N", "", "-q", "-C", name)
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("ssh-keygen for %s failed: %v", name, err)
+	}
+	content, err := os.ReadFile(keyFile)
+	if err != nil {
+		t.Fatalf("reading %s failed: %v", name, err)
+	}
+	return string(content)
+}
+
+// TestSSHAgent_MultipleKeys verifies that a primary key (via startSSHAgent)
+// plus additional keys (via addKey) all end up loaded in the same agent.
+func TestSSHAgent_MultipleKeys(t *testing.T) {
+	if _, err := exec.LookPath("ssh-agent"); err != nil {
+		t.Skip("ssh-agent not available")
+	}
+	if _, err := exec.LookPath("ssh-keygen"); err != nil {
+		t.Skip("ssh-keygen not available")
+	}
+
+	primary := genTestSSHKey(t, "primary")
+	extra1 := genTestSSHKey(t, "extra1")
+	extra2 := genTestSSHKey(t, "extra2")
+
+	agent, err := startSSHAgent(primary, "")
+	if err != nil {
+		t.Fatalf("startSSHAgent failed: %v", err)
+	}
+	defer agent.stop()
+
+	if err := agent.addKey(extra1); err != nil {
+		t.Fatalf("addKey(extra1) failed: %v", err)
+	}
+	if err := agent.addKey(extra2); err != nil {
+		t.Fatalf("addKey(extra2) failed: %v", err)
+	}
+
+	// All three keys must be loaded.
+	listCmd := exec.Command("ssh-add", "-l")
+	listCmd.Env = append(os.Environ(), "SSH_AUTH_SOCK="+agent.sock)
+	out, err := listCmd.Output()
+	if err != nil {
+		t.Fatalf("ssh-add -l failed: %v", err)
+	}
+	lines := strings.Count(strings.TrimSpace(string(out)), "\n") + 1
+	if lines != 3 {
+		t.Errorf("expected 3 keys loaded, got %d:\n%s", lines, string(out))
+	}
+	for _, name := range []string{"primary", "extra1", "extra2"} {
+		if !strings.Contains(string(out), name) {
+			t.Errorf("key %q not found in agent listing:\n%s", name, string(out))
+		}
+	}
+}
+
+// TestSSHAgent_AddInvalidKey verifies addKey returns an error for malformed key
+// content and does not affect already-loaded keys.
+func TestSSHAgent_AddInvalidKey(t *testing.T) {
+	if _, err := exec.LookPath("ssh-agent"); err != nil {
+		t.Skip("ssh-agent not available")
+	}
+	if _, err := exec.LookPath("ssh-keygen"); err != nil {
+		t.Skip("ssh-keygen not available")
+	}
+
+	agent, err := startSSHAgent(genTestSSHKey(t, "primary"), "")
+	if err != nil {
+		t.Fatalf("startSSHAgent failed: %v", err)
+	}
+	defer agent.stop()
+
+	if err := agent.addKey("-----BEGIN OPENSSH PRIVATE KEY-----\nnot-real\n-----END OPENSSH PRIVATE KEY-----"); err == nil {
+		t.Error("expected addKey to fail for an invalid key, got nil")
+	}
+
+	// The primary key must still be loaded.
+	listCmd := exec.Command("ssh-add", "-l")
+	listCmd.Env = append(os.Environ(), "SSH_AUTH_SOCK="+agent.sock)
+	out, _ := listCmd.Output()
+	if !strings.Contains(string(out), "primary") {
+		t.Errorf("primary key should survive a failed addKey, listing:\n%s", string(out))
+	}
+}
