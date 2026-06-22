@@ -197,6 +197,59 @@ inputs:
         description: "Sets the user to impersonate when using privilege escalation."
         required: false
 
+    # Advanced Configuration
+    config_file:
+        description: "Path to an ansible.cfg configuration file to use (sets ANSIBLE_CONFIG)."
+        required: false
+    no_color:
+        description: "Disables colorized output."
+        required: false
+    output_callback:
+        description: "Sets the stdout callback plugin for Ansible output (e.g. 'yaml', 'json', 'minimal')."
+        required: false
+    callbacks_enabled:
+        description: "Comma-separated list of enabled callback plugins (e.g. 'profile_tasks,timer')."
+        required: false
+    strategy_plugin:
+        description: "Specifies the strategy plugin to use (e.g. 'linear', 'free', 'mitogen_linear')."
+        required: false
+    gather_subset:
+        description: "Limits the scope of gathered facts (e.g. '!all,!min,network')."
+        required: false
+    gather_timeout:
+        description: "Timeout in seconds for gathering facts (0-3600, 0 = ansible default)."
+        required: false
+    fact_path:
+        description: "Path to local fact files loaded as host facts."
+        required: false
+    fact_caching:
+        description: "Caching method to use for facts (e.g. 'jsonfile', 'redis', 'memory')."
+        required: false
+    fact_caching_timeout:
+        description: "Timeout in seconds for the fact cache (0 = no expiry)."
+        required: false
+    poll_interval:
+        description: "Interval in seconds for polling async tasks (0-3600, 0 = ansible default)."
+        required: false
+    max_fail_percentage:
+        description: "Maximum percentage of hosts that can fail before the playbook aborts (0-100)."
+        required: false
+    any_errors_fatal:
+        description: "Treats any task error as fatal, aborting the whole play."
+        required: false
+    ssh_transfer_method:
+        description: "Method for file transfer over SSH (e.g. 'scp' or 'sftp')."
+        required: false
+    vault_password_file:
+        description: "Path to a file containing the vault password (alternative to vault_password)."
+        required: false
+    private_key_file:
+        description: "Path to a file containing the SSH private key (alternative to private_key)."
+        required: false
+    temp_dir:
+        description: "Directory for Ansible temporary files."
+        required: false
+
 outputs:
     status:
         description: "Execution status: 'success' or 'failed'"
