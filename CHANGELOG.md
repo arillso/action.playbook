@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Advanced Ansible execution inputs, now exposed via `action.yml` so they can be
+  set with `with:` (previously only reachable through `env:`): `config_file`,
+  `no_color`, `output_callback`, `callbacks_enabled`, `strategy_plugin`,
+  `gather_subset`, `gather_timeout`, `fact_path`, `fact_caching`,
+  `fact_caching_timeout`, `poll_interval`, `max_fail_percentage`,
+  `any_errors_fatal`, `ssh_transfer_method`, `vault_password_file`,
+  `private_key_file`, `temp_dir`
+- `README.md` "Advanced Configuration" section documenting these inputs with a
+  usage example
+
 ## [0.5.0] - 2026-03-15
 
 ### Added
