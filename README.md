@@ -213,6 +213,116 @@ Specifies the method to use for privilege escalation (e.g., sudo).
 
 Sets the user to impersonate when using privilege escalation.
 
+### config_file
+
+Path to an `ansible.cfg` configuration file to use (sets `ANSIBLE_CONFIG`).
+
+### no_color
+
+Disables colorized output.
+
+### output_callback
+
+Sets the stdout callback plugin for Ansible output (e.g. `yaml`, `json`, `minimal`).
+
+### callbacks_enabled
+
+Comma-separated list of enabled callback plugins (e.g. `profile_tasks,timer`).
+
+### strategy_plugin
+
+Specifies the strategy plugin to use (e.g. `linear`, `free`, `mitogen_linear`).
+
+### gather_subset
+
+Limits the scope of gathered facts (e.g. `!all,!min,network`).
+
+### gather_timeout
+
+Timeout in seconds for gathering facts (0-3600, `0` = ansible default).
+
+### fact_path
+
+Path to local fact files loaded as host facts.
+
+### fact_caching
+
+Caching method to use for facts (e.g. `jsonfile`, `redis`, `memory`).
+
+### fact_caching_timeout
+
+Timeout in seconds for the fact cache (`0` = no expiry).
+
+### poll_interval
+
+Interval in seconds for polling async tasks (0-3600, `0` = ansible default).
+
+### max_fail_percentage
+
+Maximum percentage of hosts that can fail before the playbook aborts (0-100).
+
+### any_errors_fatal
+
+Treats any task error as fatal, aborting the whole play.
+
+### ssh_transfer_method
+
+Method for file transfer over SSH (e.g. `scp` or `sftp`).
+
+### vault_password_file
+
+Path to a file containing the vault password (alternative to `vault_password`).
+
+### private_key_file
+
+Path to a file containing the SSH private key (alternative to `private_key`).
+
+### temp_dir
+
+Directory for Ansible temporary files.
+
+## Advanced Configuration
+
+Beyond the basic inputs, the action exposes Ansible's advanced execution
+options. Each input is also readable from an environment variable named
+`ANSIBLE_<INPUT_NAME_UPPERCASE>`, so the two forms below are equivalent — set
+them as action inputs via `with:` or as environment variables via `env:`.
+
+> **Heads-up:** use the action's `ANSIBLE_<INPUT_NAME>` spelling, **not**
+> Ansible's own native variable name. A few differ: `strategy_plugin` →
+> `ANSIBLE_STRATEGY_PLUGIN` (Ansible's native var is `ANSIBLE_STRATEGY`),
+> `fact_caching` → `ANSIBLE_FACT_CACHING` (native: `ANSIBLE_CACHE_PLUGIN`),
+> `config_file` → `ANSIBLE_CONFIG_FILE` (native: `ANSIBLE_CONFIG`).
+
+```yaml
+- name: Deploy with advanced Ansible tuning
+  uses: arillso/action.playbook@master
+  with:
+    playbook: deploy.yml
+    inventory: ansible_hosts.yml
+    # Performance: run plays free of the per-host lockstep, cache facts
+    strategy_plugin: free
+    fact_caching: jsonfile
+    fact_caching_timeout: '7200'
+    # Only gather the facts you need
+    gather_subset: '!all,!min,network'
+    gather_timeout: '30'
+    # Richer output and timing breakdown
+    output_callback: yaml
+    callbacks_enabled: profile_tasks,timer
+    # Fail fast across a fleet
+    max_fail_percentage: '25'
+    any_errors_fatal: 'true'
+  env:
+    ANSIBLE_HOST_KEY_CHECKING: 'false'
+```
+
+> **Note:** `fact_caching: jsonfile` also needs a cache directory. Set it via
+> `env: { ANSIBLE_CACHE_PLUGIN_CONNECTION: /tmp/ansible_facts }` or a custom
+> `config_file`. Plugin-specific options that have no dedicated input are
+> always reachable through `env:` or an `ansible.cfg` referenced by
+> `config_file`.
+
 ## SSH Authentication
 
 > **✨ New in v1.2.0+**
