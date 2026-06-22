@@ -284,9 +284,15 @@ Directory for Ansible temporary files.
 ## Advanced Configuration
 
 Beyond the basic inputs, the action exposes Ansible's advanced execution
-options. These map directly to the matching `ANSIBLE_*` environment variables,
-so the two forms below are equivalent — set them as action inputs via `with:`
-or as environment variables via `env:`.
+options. Each input is also readable from an environment variable named
+`ANSIBLE_<INPUT_NAME_UPPERCASE>`, so the two forms below are equivalent — set
+them as action inputs via `with:` or as environment variables via `env:`.
+
+> **Heads-up:** use the action's `ANSIBLE_<INPUT_NAME>` spelling, **not**
+> Ansible's own native variable name. A few differ: `strategy_plugin` →
+> `ANSIBLE_STRATEGY_PLUGIN` (Ansible's native var is `ANSIBLE_STRATEGY`),
+> `fact_caching` → `ANSIBLE_FACT_CACHING` (native: `ANSIBLE_CACHE_PLUGIN`),
+> `config_file` → `ANSIBLE_CONFIG_FILE` (native: `ANSIBLE_CONFIG`).
 
 ```yaml
 - name: Deploy with advanced Ansible tuning
