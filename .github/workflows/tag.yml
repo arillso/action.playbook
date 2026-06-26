@@ -1,12 +1,12 @@
+---
 name: Software Release
 run-name: Release ${{ github.ref_name }}
 
 on:
     push:
         tags:
-            - "[0-9]*.[0-9]*.[0-9]*"
-    release:
-        types: [published]
+            - "[0-9]+.[0-9]+.[0-9]+"
+            - "[0-9]+.[0-9]+.[0-9]+-*"
 
 permissions:
     contents: read
@@ -46,11 +46,7 @@ jobs:
             - name: Determine version
               id: version
               run: |
-                  if [[ "${{ github.event_name }}" == "release" ]]; then
-                    VERSION="${{ github.event.release.tag_name }}"
-                  else
-                    VERSION="${GITHUB_REF#refs/tags/}"
-                  fi
+                  VERSION="${GITHUB_REF#refs/tags/}"
 
                   echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 

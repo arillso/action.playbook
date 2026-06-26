@@ -1,0 +1,26 @@
+---
+name: Merge to Main
+run-name: |
+    Merge to Main by @${{ github.actor }}
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: false
+
+permissions:
+    contents: read
+    security-events: write
+    actions: read
+    pull-requests: read
+
+jobs:
+    ci:
+        uses: arillso/.github/.github/workflows/ci-go.yml@2026-06-18
+
+    security-secrets:
+        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-06-18

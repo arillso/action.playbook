@@ -1,10 +1,11 @@
 ---
-name: Weekly Security Scan
-run-name: Security Scan by @${{ github.actor }}
+name: Nightly Security Scan
+run-name: |
+    Security Scan by @${{ github.actor }}
 
 on:
     schedule:
-        - cron: "0 2 * * 1"
+        - cron: "0 2 * * *"
     workflow_dispatch:
 
 permissions:
@@ -19,7 +20,7 @@ env:
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
+    cancel-in-progress: false
 
 jobs:
     codeql:
