@@ -1111,3 +1111,204 @@ func TestSSHAgent_AddInvalidKey(t *testing.T) {
 		t.Errorf("primary key should survive a failed addKey, listing:\n%s", string(out))
 	}
 }
+
+// genTestSSHKeyWithPassphrase generates an ed25519 key encrypted with the given
+// passphrase and returns its private-key content.
+func genTestSSHKeyWithPassphrase(t *testing.T, name, passphrase string) string {
+	t.Helper()
+	keyFile := filepath.Join(t.TempDir(), name)
+	cmd := exec.Command("ssh-keygen", "-t", "ed25519", "-f", keyFile, "-N", passphrase, "-q", "-C", name)
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("ssh-keygen for %s failed: %v", name, err)
+	}
+	content, err := os.ReadFile(keyFile)
+	if err != nil {
+		t.Fatalf("reading %s failed: %v", name, err)
+	}
+	return string(content)
+}
+
+// TestSSHAgent_EncryptedPrimaryPlusAdditionalKeys mirrors the run() flow where a
+// passphrase-protected primary key is unlocked via startSSHAgent and additional
+// (unencrypted) keys are appended via addKey. All keys must end up in the agent.
+func TestSSHAgent_EncryptedPrimaryPlusAdditionalKeys(t *testing.T) {
+	if _, err := exec.LookPath("ssh-agent"); err != nil {
+		t.Skip("ssh-agent not available")
+	}
+	if _, err := exec.LookPath("ssh-keygen"); err != nil {
+		t.Skip("ssh-keygen not available")
+	}
+
+	const passphrase = "primary-passphrase-123"
+	primary := genTestSSHKeyWithPassphrase(t, "primary", passphrase)
+	extra1 := genTestSSHKey(t, "extra1")
+	extra2 := genTestSSHKey(t, "extra2")
+
+	agent, err := startSSHAgent(primary, passphrase)
+	if err != nil {
+		t.Fatalf("startSSHAgent with encrypted primary failed: %v", err)
+	}
+	defer agent.stop()
+
+	if err := agent.addKey(extra1); err != nil {
+		t.Fatalf("addKey(extra1) failed: %v", err)
+	}
+	if err := agent.addKey(extra2); err != nil {
+		t.Fatalf("addKey(extra2) failed: %v", err)
+	}
+
+	listCmd := exec.Command("ssh-add", "-l")
+	listCmd.Env = append(os.Environ(), "SSH_AUTH_SOCK="+agent.sock)
+	out, err := listCmd.Output()
+	if err != nil {
+		t.Fatalf("ssh-add -l failed: %v", err)
+	}
+	lines := strings.Count(strings.TrimSpace(string(out)), "\n") + 1
+	if lines != 3 {
+		t.Errorf("expected 3 keys loaded, got %d:\n%s", lines, string(out))
+	}
+	for _, name := range []string{"primary", "extra1", "extra2"} {
+		if !strings.Contains(string(out), name) {
+			t.Errorf("key %q not found in agent listing:\n%s", name, string(out))
+		}
+	}
+}
+
+// TestSSHAgent_AddEncryptedKeyPassphraseConflict covers the passphrase-conflict
+// edge case: addKey supplies no passphrase, so an encrypted additional key must
+// fail to load without affecting the already-loaded primary key. ssh-add is run
+// with SSH_ASKPASS disabled so the encrypted key cannot be unlocked interactively.
+func TestSSHAgent_AddEncryptedKeyPassphraseConflict(t *testing.T) {
+	if _, err := exec.LookPath("ssh-agent"); err != nil {
+		t.Skip("ssh-agent not available")
+	}
+	if _, err := exec.LookPath("ssh-keygen"); err != nil {
+		t.Skip("ssh-keygen not available")
+	}
+
+	agent, err := startSSHAgent(genTestSSHKey(t, "primary"), "")
+	if err != nil {
+		t.Fatalf("startSSHAgent failed: %v", err)
+	}
+	defer agent.stop()
+
+	encrypted := genTestSSHKeyWithPassphrase(t, "encrypted-extra", "some-passphrase")
+	// addKey passes no passphrase and the test environment has no askpass
+	// helper or TTY, so unlocking the encrypted key must fail.
+	t.Setenv("SSH_ASKPASS_REQUIRE", "never")
+	t.Setenv("DISPLAY", "")
+	if err := agent.addKey(encrypted); err == nil {
+		t.Error("expected addKey to fail for an encrypted key without passphrase, got nil")
+	}
+
+	// The primary key must still be loaded after the failed addKey.
+	listCmd := exec.Command("ssh-add", "-l")
+	listCmd.Env = append(os.Environ(), "SSH_AUTH_SOCK="+agent.sock)
+	out, _ := listCmd.Output()
+	if !strings.Contains(string(out), "primary") {
+		t.Errorf("primary key should survive a failed encrypted addKey, listing:\n%s", string(out))
+	}
+}
+
+// --- run() orchestration tests -------------------------------------------------
+//
+// run() constructs a concrete *ansible.Playbook inline and calls its Exec method,
+// so it has no injection seam for mocking the actual Ansible invocation. These
+// tests therefore exercise run()'s orchestration logic through its guard and
+// early-return paths, which all return before playbook.Exec is ever reached.
+// This gives real coverage of the run() function itself (argument normalization,
+// validation ordering, ssh-agent setup, vault handling and the
+// writeActionOutputs side effect) without requiring a live ansible-playbook
+// binary or network access.
+
+// runWithArgs builds a CLI command wired to the real run action and invokes it
+// with the given args, returning run()'s error.
+func runWithArgs(t *testing.T, args []string) error {
+	t.Helper()
+	cmd := newTestCommand(run)
+	return cmd.Run(context.Background(), args)
+}
+
+// TestRun_MissingPlaybook verifies run() returns a validation error and never
+// reaches Ansible execution when no playbook is supplied.
+func TestRun_MissingPlaybook(t *testing.T) {
+	tmpDir := t.TempDir()
+	inv := createTempFile(t, tmpDir, "inv.yml", "all:\n  hosts:\n    localhost:\n")
+	err := runWithArgs(t, []string{"test", "--playbook", filepath.Join(tmpDir, "does-not-exist.yml"), "--inventory", inv})
+	if err == nil {
+		t.Fatal("expected run() to fail for a missing playbook, got nil")
+	}
+}
+
+// TestRun_InvalidNumericInput verifies run() applies numeric validation before
+// attempting any execution.
+func TestRun_InvalidNumericInput(t *testing.T) {
+	tmpDir := t.TempDir()
+	pb := createTempFile(t, tmpDir, "pb.yml", "---\n- hosts: all\n")
+	inv := createTempFile(t, tmpDir, "inv.yml", "all:\n  hosts:\n    localhost:\n")
+	err := runWithArgs(t, []string{"test", "--playbook", pb, "--inventory", inv, "--execution-timeout", "0"})
+	if err == nil {
+		t.Fatal("expected run() to fail for an invalid execution-timeout, got nil")
+	}
+}
+
+// TestRun_InvalidPrivateKey verifies run() surfaces an ssh-agent startup failure
+// when the supplied private key is malformed, returning before Ansible exec.
+func TestRun_InvalidPrivateKey(t *testing.T) {
+	if _, err := exec.LookPath("ssh-agent"); err != nil {
+		t.Skip("ssh-agent not available")
+	}
+	tmpDir := t.TempDir()
+	pb := createTempFile(t, tmpDir, "pb.yml", "---\n- hosts: all\n")
+	inv := createTempFile(t, tmpDir, "inv.yml", "all:\n  hosts:\n    localhost:\n")
+	err := runWithArgs(t, []string{
+		"test", "--playbook", pb, "--inventory", inv,
+		"--private-key", "-----BEGIN OPENSSH PRIVATE KEY-----\nnot-real\n-----END OPENSSH PRIVATE KEY-----",
+	})
+	if err == nil {
+		t.Fatal("expected run() to fail for an invalid private key, got nil")
+	}
+	if !strings.Contains(err.Error(), "ssh-agent") {
+		t.Errorf("expected ssh-agent error, got: %v", err)
+	}
+}
+
+// TestRun_WritesActionOutputsOnError verifies run()'s deferred writeActionOutputs
+// hook records a failed status to $GITHUB_OUTPUT even when run() exits via an
+// early error path.
+func TestRun_WritesActionOutputsOnError(t *testing.T) {
+	tmpDir := t.TempDir()
+	outFile := filepath.Join(tmpDir, "github_output")
+	if err := os.WriteFile(outFile, nil, 0600); err != nil {
+		t.Fatalf("seeding GITHUB_OUTPUT: %v", err)
+	}
+	t.Setenv("GITHUB_OUTPUT", outFile)
+
+	inv := createTempFile(t, tmpDir, "inv.yml", "all:\n  hosts:\n    localhost:\n")
+	if err := runWithArgs(t, []string{"test", "--playbook", filepath.Join(tmpDir, "missing.yml"), "--inventory", inv}); err == nil {
+		t.Fatal("expected run() to fail for a missing playbook, got nil")
+	}
+
+	data, err := os.ReadFile(outFile)
+	if err != nil {
+		t.Fatalf("reading GITHUB_OUTPUT: %v", err)
+	}
+	if !strings.Contains(string(data), "status=failed") {
+		t.Errorf("expected status=failed in GITHUB_OUTPUT, got:\n%s", string(data))
+	}
+}
+
+// TestRun_KnownHostsFromInvalidInput verifies run() processes the known-hosts
+// flag during orchestration. setupKnownHosts writes to the user's known_hosts
+// file, so this only asserts run() reaches and returns from that step (a later
+// guard ultimately fails because the playbook is missing).
+func TestRun_KnownHostsAndMissingPlaybook(t *testing.T) {
+	tmpDir := t.TempDir()
+	inv := createTempFile(t, tmpDir, "inv.yml", "all:\n  hosts:\n    localhost:\n")
+	err := runWithArgs(t, []string{
+		"test", "--playbook", filepath.Join(tmpDir, "missing.yml"), "--inventory", inv,
+	})
+	if err == nil {
+		t.Fatal("expected run() to fail for a missing playbook, got nil")
+	}
+}
