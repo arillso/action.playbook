@@ -1222,9 +1222,16 @@ func TestSSHAgent_AddEncryptedKeyPassphraseConflict(t *testing.T) {
 // binary or network access.
 
 // runWithArgs builds a CLI command wired to the real run action and invokes it
-// with the given args, returning run()'s error.
+// with the given args, returning run()'s error. It isolates the two filesystem
+// side effects run() has on an early-exit path so the tests never touch the
+// host: GITHUB_OUTPUT (run()'s deferred writeActionOutputs appends here) and
+// HOME (setupKnownHosts writes ~/.ssh/known_hosts) are redirected into the
+// test's temp dir unless the caller already set them.
 func runWithArgs(t *testing.T, args []string) error {
 	t.Helper()
+	if os.Getenv("GITHUB_OUTPUT") == "" {
+		t.Setenv("GITHUB_OUTPUT", filepath.Join(t.TempDir(), "github_output"))
+	}
 	cmd := newTestCommand(run)
 	return cmd.Run(context.Background(), args)
 }
@@ -1298,17 +1305,31 @@ func TestRun_WritesActionOutputsOnError(t *testing.T) {
 	}
 }
 
-// TestRun_KnownHostsFromInvalidInput verifies run() processes the known-hosts
-// flag during orchestration. setupKnownHosts writes to the user's known_hosts
-// file, so this only asserts run() reaches and returns from that step (a later
-// guard ultimately fails because the playbook is missing).
-func TestRun_KnownHostsAndMissingPlaybook(t *testing.T) {
+// TestRun_KnownHostsWritten verifies run() actually applies the --known-hosts
+// flag: setupKnownHosts runs only after the early parameter validation passes,
+// so the playbook and inventory must exist. With a valid (but trivial) playbook
+// run() reaches setupKnownHosts, writes the entry to $HOME/.ssh/known_hosts,
+// and only then fails at the real ansible-playbook exec. We assert both: the
+// known_hosts entry landed on disk (the step ran) and run() ultimately errored.
+func TestRun_KnownHostsWritten(t *testing.T) {
 	tmpDir := t.TempDir()
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	pb := createTempFile(t, tmpDir, "pb.yml", "---\n- hosts: all\n")
 	inv := createTempFile(t, tmpDir, "inv.yml", "all:\n  hosts:\n    localhost:\n")
+	khEntry := "example.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITESTONLYTESTONLYTESTONLYTESTONLYTESTONLY"
 	err := runWithArgs(t, []string{
-		"test", "--playbook", filepath.Join(tmpDir, "missing.yml"), "--inventory", inv,
+		"test", "--playbook", pb, "--inventory", inv,
+		"--known-hosts", khEntry,
 	})
 	if err == nil {
-		t.Fatal("expected run() to fail for a missing playbook, got nil")
+		t.Fatal("expected run() to fail at ansible exec, got nil")
+	}
+	data, readErr := os.ReadFile(filepath.Join(home, ".ssh", "known_hosts"))
+	if readErr != nil {
+		t.Fatalf("expected known_hosts to be written, got: %v", readErr)
+	}
+	if !strings.Contains(string(data), "example.com") {
+		t.Errorf("known_hosts missing the supplied entry, got:\n%s", string(data))
 	}
 }
