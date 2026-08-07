@@ -4,6 +4,43 @@ linters:
     default: standard
     enable:
         - gocritic
+        - gosec
+        # Already active under `default: standard`; listed so the intent
+        # survives a switch of `default` to `none` or `fast`.
+        - ineffassign
+        - misspell
+    settings:
+        govet:
+            enable-all: true
+            disable:
+                - fieldalignment
+                - shadow
+    exclusions:
+        rules:
+            # G204: exec.CommandContext with argument slices (ssh-add,
+            # ansible-lint). The binary name is a fixed literal, only arguments
+            # come from input, and no shell is involved. Scoped to main.go so a
+            # future `sh -c` call elsewhere is still reported.
+            - path: ^main\.go$
+              linters:
+                  - gosec
+              text: 'G204'
+            # G302, G304, G306, G703: the runner-owned files $GITHUB_OUTPUT and
+            # $GITHUB_STEP_SUMMARY plus the action's own --output-file. Their
+            # paths come from the Actions runner, and 0644 is required so the
+            # runner can read them back.
+            - path: ^main\.go$
+              linters:
+                  - gosec
+              text: '(G302|G304|G306|G703)'
+              source: '(outputFile|summaryFile)'
+            # Test fixtures generate throwaway keys and files under t.TempDir();
+            # variable paths, 0644 and the fixed ssh-keygen binary carry no risk
+            # there.
+            - path: _test\.go$
+              linters:
+                  - gosec
+              text: '(G204|G304|G306)'
 formatters:
     enable:
         - gofmt
