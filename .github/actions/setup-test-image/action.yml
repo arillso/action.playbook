@@ -1,13 +1,10 @@
 ---
 name: Setup Test Image
-description: Checks out the repository, prepares Buildx, builds the test image from cache and points action.yml at it.
+description: Prepares Buildx, builds the test image from cache and points action.yml at it. Requires the repository to be checked out first.
 
 runs:
     using: composite
     steps:
-        - name: Checkout code
-          uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
         - name: Set up Docker Buildx
           uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
 

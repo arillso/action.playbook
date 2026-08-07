@@ -130,6 +130,9 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
             - name: Setup test image
               uses: ./.github/actions/setup-test-image
 
@@ -150,6 +153,9 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
             - name: Setup test image
               uses: ./.github/actions/setup-test-image
 
@@ -174,6 +180,9 @@ jobs:
                 mode: [check, diff, syntax_check, verbose]
             fail-fast: false
         steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
             - name: Setup test image
               uses: ./.github/actions/setup-test-image
 
@@ -197,6 +206,9 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 20
         steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
             - name: Setup test image
               uses: ./.github/actions/setup-test-image
 
@@ -250,6 +262,9 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
             - name: Setup test image
               uses: ./.github/actions/setup-test-image
 
@@ -338,6 +353,9 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
             - name: Setup test image
               uses: ./.github/actions/setup-test-image
 
@@ -379,6 +397,9 @@ jobs:
                 mode: [list_hosts, list_tags, list_tasks]
             fail-fast: false
         steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
             - name: Setup test image
               uses: ./.github/actions/setup-test-image
 
@@ -400,6 +421,9 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 20
         steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
             - name: Setup test image
               uses: ./.github/actions/setup-test-image
 
@@ -465,6 +489,9 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 20
         steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
             - name: Setup test image
               uses: ./.github/actions/setup-test-image
 
@@ -526,6 +553,9 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
             - name: Setup test image
               uses: ./.github/actions/setup-test-image
 
@@ -553,6 +583,9 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
             - name: Setup test image
               uses: ./.github/actions/setup-test-image
 
@@ -636,6 +669,9 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
             - name: Setup test image
               uses: ./.github/actions/setup-test-image
 
@@ -670,6 +706,9 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
             - name: Setup test image
               uses: ./.github/actions/setup-test-image
 
@@ -711,6 +750,9 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
             - name: Setup test image
               uses: ./.github/actions/setup-test-image
 
@@ -733,6 +775,9 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 20
         steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
             - name: Setup test image
               uses: ./.github/actions/setup-test-image
 
@@ -797,6 +842,9 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
             - name: Setup test image
               uses: ./.github/actions/setup-test-image
 
