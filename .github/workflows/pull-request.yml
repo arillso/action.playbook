@@ -130,24 +130,8 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Run basic playbook
               uses: ./
@@ -166,24 +150,8 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Run advanced playbook
               uses: ./
@@ -206,24 +174,8 @@ jobs:
                 mode: [check, diff, syntax_check, verbose]
             fail-fast: false
         steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Run with ${{ matrix.mode }} mode
               uses: ./
@@ -245,24 +197,8 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 20
         steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test with tags
               uses: ./
@@ -314,24 +250,8 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Generate test SSH key (Unix LF format)
               run: |
@@ -418,24 +338,8 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test with non-existent playbook
               uses: ./
@@ -475,24 +379,8 @@ jobs:
                 mode: [list_hosts, list_tags, list_tasks]
             fail-fast: false
         steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Run with ${{ matrix.mode }}
               uses: ./
@@ -512,24 +400,8 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 20
         steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test dry_run mode (check + diff combined)
               uses: ./
@@ -593,24 +465,8 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 20
         steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test multiple playbooks (comma-separated)
               uses: ./
@@ -670,24 +526,8 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Create vault-encrypted vars file
               run: |
@@ -713,24 +553,8 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test output_file
               uses: ./
@@ -812,24 +636,8 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test with lint enabled (expect failure - ansible-lint not in image)
               uses: ./
@@ -862,24 +670,8 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test retries with failing playbook
               uses: ./
@@ -919,24 +711,8 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test with become flags (syntax check - sudo not in container)
               uses: ./
@@ -957,24 +733,8 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 20
         steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test galaxy_force (reinstall)
               uses: ./
@@ -1037,24 +797,8 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test with explicit connection type
               uses: ./
