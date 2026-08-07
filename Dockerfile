@@ -1,14 +1,19 @@
 # -------------------------
 # Stage 1: Build Stage
 # -------------------------
-FROM golang:1.26-alpine@sha256:0178a641fbb4858c5f1b48e34bdaabe0350a330a1b1149aabd498d0699ff5fb2 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine@sha256:0178a641fbb4858c5f1b48e34bdaabe0350a330a1b1149aabd498d0699ff5fb2 AS builder
 # Use the official Golang Alpine image and assign this build stage the name "builder".
+# The builder runs natively on the build platform and cross-compiles for the target.
+
+# Target platform arguments injected by Docker Buildx for multi-platform builds.
+ARG TARGETOS
+ARG TARGETARCH
 
 # Set build environment variables for module support and cross-compilation.
 ENV GO111MODULE=on \
 	CGO_ENABLED=0 \
-	GOOS=linux \
-	GOARCH=amd64
+	GOOS=${TARGETOS} \
+	GOARCH=${TARGETARCH}
 
 # Set the working directory inside the container where the build will be executed.
 WORKDIR /app
