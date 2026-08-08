@@ -1,3 +1,4 @@
+---
 name: "Play Ansible Playbook"
 description: "Github Action for running Ansible Playbooks with advanced configuration options."
 
