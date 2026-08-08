@@ -22,7 +22,8 @@ This is a Docker-based GitHub Action written in Go that executes Ansible playboo
 
 - **Language**: Go 1.25+
 - **Formatting**: gofmt (built-in)
-- **Linting**: golangci-lint with staticcheck, govet, gosimple
+- **Linting**: golangci-lint (standard set) plus gocritic, gosec, ineffassign,
+  misspell and govet with `enable-all`
 - **Dependencies**: Minimal - only go.ansible, godotenv, urfave/cli
 - **Commits**: Conventional Commits format
 

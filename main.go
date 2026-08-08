@@ -543,6 +543,8 @@ func setupKnownHosts(content string) error {
 		normalized += "\n"
 	}
 	khPath := filepath.Join(sshDir, "known_hosts")
+	// #nosec G304 -- path is built from os.UserHomeDir() and fixed literals,
+	// no part of it comes from action input. Mode stays 0600 on purpose.
 	f, err := os.OpenFile(khPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		return fmt.Errorf("failed to open known_hosts: %w", err)
@@ -689,6 +691,9 @@ func startSSHAgent(privateKey, passphrase string) (*sshAgent, error) {
 			return nil, fmt.Errorf("failed to write askpass script: %w", err)
 		}
 		_ = askpassScript.Close()
+		// #nosec G302 -- SSH_ASKPASS must be executable, so 0700 is the
+		// tightest mode that works; the file is a private temp file owned by
+		// this process and is removed once ssh-add returns.
 		if err := os.Chmod(askpassPath, 0700); err != nil {
 			_ = os.Remove(askpassPath)
 			_ = os.Remove(keyPath)
@@ -1165,6 +1170,8 @@ func writeActionOutputs(execErr error) {
 		}
 	}
 
+	// #nosec G302,G304,G703 -- path comes from $GITHUB_OUTPUT, set by the
+	// Actions runner; 0644 is required so the runner can read the file back.
 	f, err := os.OpenFile(outputFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Printf("Warning: could not write action outputs: %v", err)
@@ -1205,6 +1212,8 @@ func writeStepSummary(playbooks []string, execErr error, duration time.Duration)
 	summary := fmt.Sprintf("## Ansible Playbook Results\n\n| | |\n|---|---|\n| **Playbooks** | %s |\n| **Status** | %s |\n| **Duration** | %s |\n",
 		playbookList, status, formatDuration(duration))
 
+	// #nosec G302,G304,G703 -- path comes from $GITHUB_STEP_SUMMARY, set by the
+	// Actions runner; 0644 is required so the runner can read the file back.
 	f, err := os.OpenFile(summaryFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Printf("Warning: could not write step summary: %v", err)
