@@ -133,21 +133,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Run basic playbook
               uses: ./
@@ -169,21 +156,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Run advanced playbook
               uses: ./
@@ -209,21 +183,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Run with ${{ matrix.mode }} mode
               uses: ./
@@ -248,21 +209,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test with tags
               uses: ./
@@ -317,21 +265,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Generate test SSH key (Unix LF format)
               run: |
@@ -421,21 +356,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test with non-existent playbook
               uses: ./
@@ -478,21 +400,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Run with ${{ matrix.mode }}
               uses: ./
@@ -515,21 +424,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test dry_run mode (check + diff combined)
               uses: ./
@@ -596,21 +492,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test multiple playbooks (comma-separated)
               uses: ./
@@ -673,21 +556,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Create vault-encrypted vars file
               run: |
@@ -716,21 +586,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test output_file
               uses: ./
@@ -815,21 +672,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test with lint enabled (expect failure - ansible-lint not in image)
               uses: ./
@@ -865,21 +709,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test retries with failing playbook
               uses: ./
@@ -922,21 +753,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test with become flags (syntax check - sudo not in container)
               uses: ./
@@ -960,21 +778,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test galaxy_force (reinstall)
               uses: ./
@@ -1040,21 +845,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-
-            - name: Pre-build with cache
-              uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
-              with:
-                  context: .
-                  load: true
-                  tags: action-playbook:test
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Update action.yml for testing
-              run: |
-                  sed -i 's|image: ".*"|image: "docker://action-playbook:test"|' action.yml
+            - name: Setup test image
+              uses: ./.github/actions/setup-test-image
 
             - name: Test with explicit connection type
               uses: ./
@@ -1101,6 +893,7 @@ jobs:
         name: Test Summary
         needs:
             - setup-environment
+            - build-action
             - test-basic
             - test-advanced
             - test-modes
@@ -1165,57 +958,7 @@ jobs:
                   mode: upsert
 
             - name: Test quality gate
+              if: contains(needs.*.result, 'failure')
               run: |
-                  failed_jobs=()
-                  if [[ "${{ needs.test-basic.result }}" == "failure" ]]; then
-                      failed_jobs+=("Basic Tests")
-                  fi
-                  if [[ "${{ needs.test-advanced.result }}" == "failure" ]]; then
-                      failed_jobs+=("Advanced Tests")
-                  fi
-                  if [[ "${{ needs.test-modes.result }}" == "failure" ]]; then
-                      failed_jobs+=("Mode Tests")
-                  fi
-                  if [[ "${{ needs.test-parameters.result }}" == "failure" ]]; then
-                      failed_jobs+=("Parameter Tests")
-                  fi
-                  if [[ "${{ needs.test-ssh-key-handling.result }}" == "failure" ]]; then
-                      failed_jobs+=("SSH Key Handling Tests")
-                  fi
-                  if [[ "${{ needs.test-listing.result }}" == "failure" ]]; then
-                      failed_jobs+=("Listing Mode Tests")
-                  fi
-                  if [[ "${{ needs.test-execution-options.result }}" == "failure" ]]; then
-                      failed_jobs+=("Execution Options Tests")
-                  fi
-                  if [[ "${{ needs.test-multi-input.result }}" == "failure" ]]; then
-                      failed_jobs+=("Multi-Input Tests")
-                  fi
-                  if [[ "${{ needs.test-vault.result }}" == "failure" ]]; then
-                      failed_jobs+=("Vault Tests")
-                  fi
-                  if [[ "${{ needs.test-output.result }}" == "failure" ]]; then
-                      failed_jobs+=("Output Tests")
-                  fi
-                  if [[ "${{ needs.test-lint.result }}" == "failure" ]]; then
-                      failed_jobs+=("Lint Tests")
-                  fi
-                  if [[ "${{ needs.test-retries.result }}" == "failure" ]]; then
-                      failed_jobs+=("Retry Tests")
-                  fi
-                  if [[ "${{ needs.test-privilege-escalation.result }}" == "failure" ]]; then
-                      failed_jobs+=("Privilege Escalation Tests")
-                  fi
-                  if [[ "${{ needs.test-galaxy-options.result }}" == "failure" ]]; then
-                      failed_jobs+=("Galaxy Options Tests")
-                  fi
-                  if [[ "${{ needs.test-connection.result }}" == "failure" ]]; then
-                      failed_jobs+=("Connection Tests")
-                  fi
-
-                  if [[ ${#failed_jobs[@]} -gt 0 ]]; then
-                      echo "Critical tests failed: ${failed_jobs[*]}"
-                      exit 1
-                  fi
-
-                  echo "All critical tests passed"
+                  echo "One or more required jobs failed; see the summary above."
+                  exit 1
