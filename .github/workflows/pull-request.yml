@@ -892,6 +892,9 @@ jobs:
     test-summary:
         name: Test Summary
         needs:
+            - ci
+            - lint
+            - security-secrets
             - setup-environment
             - build-action
             - test-basic
