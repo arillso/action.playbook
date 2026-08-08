@@ -43,7 +43,7 @@ action-test: build-docker ## Run action tests with test playbook
 
 ## Building
 build: ## Build Go binary
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o main .
+	CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o main .
 
 build-docker: ## Build Docker image
 	docker build -t action-playbook:local .
