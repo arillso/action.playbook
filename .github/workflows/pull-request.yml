@@ -925,6 +925,9 @@ jobs:
             - name: Generate comprehensive test summary
               run: |
                   ./tests/test-summary.sh "Action-Tests" \
+                  "Go CI=${{ needs.ci.result }}" \
+                  "Lint=${{ needs.lint.result }}" \
+                  "Secret Scan=${{ needs.security-secrets.result }}" \
                   "Basic Tests=${{ needs.test-basic.result }}" \
                   "Advanced Tests=${{ needs.test-advanced.result }}" \
                   "Mode Tests=${{ needs.test-modes.result }}" \
