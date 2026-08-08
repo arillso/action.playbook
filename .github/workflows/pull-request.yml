@@ -964,7 +964,7 @@ jobs:
                   mode: upsert
 
             - name: Test quality gate
-              if: contains(needs.*.result, 'failure')
+              if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
               run: |
-                  echo "One or more required jobs failed; see the summary above."
+                  echo "One or more required jobs failed or were cancelled; see the summary above."
                   exit 1
