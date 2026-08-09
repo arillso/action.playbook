@@ -24,7 +24,11 @@ concurrency:
 
 jobs:
     codeql:
-        uses: arillso/.github/.github/workflows/security-codeql.yml@2026-08-07
+        needs: prepare
+        uses: arillso/.github/.github/workflows/security-code.yml@2026-08-07
+        with:
+            languages: '["go"]'
+            go-version: ${{ needs.prepare.outputs.go_version }}
 
     prepare:
         runs-on: ubuntu-latest
