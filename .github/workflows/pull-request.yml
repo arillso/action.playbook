@@ -892,6 +892,9 @@ jobs:
     test-summary:
         name: Test Summary
         needs:
+            - ci
+            - lint
+            - security-secrets
             - setup-environment
             - build-action
             - test-basic
@@ -922,6 +925,9 @@ jobs:
             - name: Generate comprehensive test summary
               run: |
                   ./tests/test-summary.sh "Action-Tests" \
+                  "Go CI=${{ needs.ci.result }}" \
+                  "Lint=${{ needs.lint.result }}" \
+                  "Secret Scan=${{ needs.security-secrets.result }}" \
                   "Basic Tests=${{ needs.test-basic.result }}" \
                   "Advanced Tests=${{ needs.test-advanced.result }}" \
                   "Mode Tests=${{ needs.test-modes.result }}" \
@@ -958,7 +964,7 @@ jobs:
                   mode: upsert
 
             - name: Test quality gate
-              if: contains(needs.*.result, 'failure')
+              if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
               run: |
-                  echo "One or more required jobs failed; see the summary above."
+                  echo "One or more required jobs failed or were cancelled; see the summary above."
                   exit 1
