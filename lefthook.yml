@@ -43,4 +43,7 @@ pre-push:
         gitleaks-full:
             run: gitleaks git --redact --no-banner
         go-test:
+            # go.mod/go.sum are included: a dependency-only push can break the
+            # build or tests without touching a single *.go file.
+            glob: "{*.go,go.mod,go.sum}"
             run: go test -race ./...
