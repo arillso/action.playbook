@@ -25,14 +25,14 @@ linters:
               linters:
                   - gosec
               text: 'G204'
-            # G302, G304, G703: the runner-owned files $GITHUB_OUTPUT and
+            # G302, G304: the runner-owned files $GITHUB_OUTPUT and
             # $GITHUB_STEP_SUMMARY plus the action's own --output-file. Their
             # paths come from the Actions runner, and 0644 is required so the
             # runner can read them back.
             - path: ^main\.go$
               linters:
                   - gosec
-              text: '(G302|G304|G703)'
+              text: '(G302|G304)'
               source: '(outputFile|summaryFile)'
             # Test fixtures generate throwaway keys and files under t.TempDir();
             # variable paths, 0644 and the fixed ssh-keygen binary carry no risk
