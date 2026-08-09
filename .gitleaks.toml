@@ -9,5 +9,9 @@ useDefault = true
     '''megalinter-reports''',
     '''(.*?)gitleaks\.toml$''',
     '''(?i)(.*?)(png|jpeg|jpg|gif|doc|docx|pdf|bin|xls|xlsx|pyc|zip)$''']
-    commits = [
-    '''318d67f8b917c72ec5a58616dbf1f16fb6d29503''']
+    # Placeholder PEM blocks used as negative-path test fixtures in main_test.go:
+    # the key body is a literal marker ("not-a-real-key") or a repeated-letter stub
+    # ("AAA"/"BBB", still present in history), never real key material. Scoped to
+    # these exact bodies so genuine private keys in test files are still reported.
+    regexes = [
+    '''-----BEGIN [A-Z ]*PRIVATE KEY-----\\n(not-a-real-key|A{3}|B{3})\\n-----END [A-Z ]*PRIVATE KEY-----''']

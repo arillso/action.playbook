@@ -1099,7 +1099,7 @@ func TestSSHAgent_AddInvalidKey(t *testing.T) {
 	}
 	defer agent.stop()
 
-	if err := agent.addKey("-----BEGIN OPENSSH PRIVATE KEY-----\nnot-real\n-----END OPENSSH PRIVATE KEY-----"); err == nil {
+	if err := agent.addKey("-----BEGIN OPENSSH PRIVATE KEY-----\nnot-a-real-key\n-----END OPENSSH PRIVATE KEY-----"); err == nil {
 		t.Error("expected addKey to fail for an invalid key, got nil")
 	}
 
@@ -1270,7 +1270,7 @@ func TestRun_InvalidPrivateKey(t *testing.T) {
 	inv := createTempFile(t, tmpDir, "inv.yml", "all:\n  hosts:\n    localhost:\n")
 	err := runWithArgs(t, []string{
 		"test", "--playbook", pb, "--inventory", inv,
-		"--private-key", "-----BEGIN OPENSSH PRIVATE KEY-----\nnot-real\n-----END OPENSSH PRIVATE KEY-----",
+		"--private-key", "-----BEGIN OPENSSH PRIVATE KEY-----\nnot-a-real-key\n-----END OPENSSH PRIVATE KEY-----",
 	})
 	if err == nil {
 		t.Fatal("expected run() to fail for an invalid private key, got nil")
