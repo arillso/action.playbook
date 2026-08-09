@@ -1170,8 +1170,9 @@ func writeActionOutputs(execErr error) {
 		}
 	}
 
-	// #nosec G302,G304,G703 -- path comes from $GITHUB_OUTPUT, set by the
-	// Actions runner; 0644 is required so the runner can read the file back.
+	// The path comes from $GITHUB_OUTPUT, set by the Actions runner; 0644 is
+	// required so the runner can read the file back. The matching gosec rules
+	// are excluded in .golangci.yml.
 	f, err := os.OpenFile(outputFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Printf("Warning: could not write action outputs: %v", err)
@@ -1212,8 +1213,9 @@ func writeStepSummary(playbooks []string, execErr error, duration time.Duration)
 	summary := fmt.Sprintf("## Ansible Playbook Results\n\n| | |\n|---|---|\n| **Playbooks** | %s |\n| **Status** | %s |\n| **Duration** | %s |\n",
 		playbookList, status, formatDuration(duration))
 
-	// #nosec G302,G304,G703 -- path comes from $GITHUB_STEP_SUMMARY, set by the
-	// Actions runner; 0644 is required so the runner can read the file back.
+	// The path comes from $GITHUB_STEP_SUMMARY, set by the Actions runner; 0644
+	// is required so the runner can read the file back. The matching gosec
+	// rules are excluded in .golangci.yml.
 	f, err := os.OpenFile(summaryFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Printf("Warning: could not write step summary: %v", err)
