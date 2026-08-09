@@ -139,6 +139,13 @@ jobs:
                   subject-digest: ${{ steps.build.outputs.digest }}
                   push-to-registry: true
 
+    security-sbom:
+        needs: [prepare, build-and-push-image]
+        uses: arillso/.github/.github/workflows/security-sbom.yml@2026-08-07
+        with:
+            artifact-type: container
+            artifact-ref: ghcr.io/${{ github.repository }}:${{ needs.prepare.outputs.version }}
+
     create-release:
         runs-on: ubuntu-latest
         needs: [prepare, build-and-push-image]
