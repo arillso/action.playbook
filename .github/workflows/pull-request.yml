@@ -38,6 +38,9 @@ jobs:
     security-secrets:
         uses: arillso/.github/.github/workflows/security-secrets.yml@2026-08-07
 
+    security-deps:
+        uses: arillso/.github/.github/workflows/security-deps.yml@2026-08-07
+
     claude-review:
         uses: arillso/.github/.github/workflows/ai-claude-review.yml@2026-08-07
         secrets:
