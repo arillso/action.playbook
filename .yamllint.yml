@@ -1,21 +1,66 @@
 ---
 extends: default
+
 rules:
     line-length:
         max: 500
+        level: warning
+
+    comments:
+        min-spaces-from-content: 1
+
+    comments-indentation: false
+
     indentation:
         spaces: 4
         indent-sequences: true
+        check-multi-line-strings: false
+
     truthy:
-        allowed-values: ['true', 'false']
+        allowed-values: ["true", "false"]
         check-keys: false
-    comments:
-        min-spaces-from-content: 1
+
+    brackets:
+        min-spaces-inside: 0
+        max-spaces-inside: 0
+
+    braces:
+        min-spaces-inside: 0
+        max-spaces-inside: 1
+
+    colons:
+        max-spaces-before: 0
+        max-spaces-after: 1
+
+    commas:
+        max-spaces-before: 0
+        max-spaces-after: 1
+
+    hyphens:
+        max-spaces-after: 1
+
+    empty-lines:
+        max: 2
+        max-start: 0
+        max-end: 1
+
     document-start:
         present: true
+
+    document-end:
+        present: false
+
+    trailing-spaces: {}
+
+    key-duplicates: {}
+
+    new-lines:
+        type: unix
+
     octal-values:
         forbid-implicit-octal: true
         forbid-explicit-octal: true
+
 ignore: |
     .ansible/
     .venv/
