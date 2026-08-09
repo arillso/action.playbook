@@ -1,14 +1,20 @@
 ---
 # Lefthook git hooks — run `lefthook install` once after cloning.
 # Tools without a system binary are installed on-demand via `npx --yes`.
-# System binaries: gofmt (from Go), golangci-lint, yamllint, gitleaks
-# (>= v8.19 for the `git --staged` subcommand). actionlint is optional: the
-# hook skips when it is not installed.
+# System binaries: gofmt (from Go), golangci-lint, yamllint, actionlint,
+# gitleaks (>= v8.19 for the `git --staged` subcommand). All of them are
+# required: a missing linter blocks the commit instead of skipping, so the
+# hooks cannot be bypassed by uninstalling the tool.
 #
 # Stack: Go GitHub Action. Adapted from arillso/ansible.system, with
 # ansible-lint swapped for gofmt + golangci-lint. No prettier: yamllint and
 # markdownlint already cover yml/md, and the repo's 4-space YAML/.editorconfig
 # conventions diverge from Prettier's defaults.
+
+# Every hook below guards its binary the same way: the guard turns the bare
+# exit 127 into a message naming the tool and how to install it, then exits 1.
+# It must never skip — deleting the binary would otherwise bypass the hook.
+# markdownlint needs no guard: npx fetches it on demand.
 
 pre-commit:
     parallel: true
@@ -17,25 +23,41 @@ pre-commit:
             glob: "*.go"
             # gofmt -l only prints unformatted files and still exits 0, so the
             # commit must be blocked explicitly when the list is non-empty.
-            run: test -z "$(gofmt -l {staged_files})"
+            # The guard runs first: inside $(...) a missing gofmt would yield
+            # an empty list, which `test -z` would read as "all formatted".
+            run: >-
+                command -v gofmt >/dev/null 2>&1 || { echo 'gofmt not found:
+                install Go (https://go.dev/dl/)'; exit 1; } && test -z
+                "$(gofmt -l {staged_files})"
         golangci-lint:
             glob: "*.go"
-            run: golangci-lint run
+            run: >-
+                command -v golangci-lint >/dev/null 2>&1 || { echo
+                'golangci-lint not found: see
+                https://golangci-lint.run/welcome/install/'; exit 1; } &&
+                golangci-lint run
         yamllint:
             glob: "*.{yml,yaml}"
-            run: yamllint -c .yamllint.yml {staged_files}
+            run: >-
+                command -v yamllint >/dev/null 2>&1 || { echo 'yamllint not
+                found: pip install yamllint'; exit 1; } && yamllint -c
+                .yamllint.yml {staged_files}
         markdownlint:
             glob: "*.md"
             run: npx --yes -- markdownlint-cli2 {staged_files}
         actionlint:
             glob: ".github/workflows/*.{yml,yaml}"
-            # actionlint is often absent locally; skip instead of failing the
-            # commit with exit 127. A present-but-failing actionlint still blocks.
             run: >-
                 command -v actionlint >/dev/null 2>&1 || { echo 'actionlint not
-                found, skipping'; exit 0; } && actionlint {staged_files}
+                found: install it (brew install actionlint) or see
+                https://github.com/rhysd/actionlint'; exit 1; } && actionlint
+                {staged_files}
         gitleaks:
-            run: gitleaks git --staged --redact --no-banner
+            run: >-
+                command -v gitleaks >/dev/null 2>&1 || { echo 'gitleaks not
+                found (>= v8.19 required): see
+                https://github.com/gitleaks/gitleaks#installing'; exit 1; } &&
+                gitleaks git --staged --redact --no-banner
 
 pre-push:
     parallel: true
