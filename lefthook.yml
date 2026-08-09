@@ -1,9 +1,10 @@
 ---
 # Lefthook git hooks — run `lefthook install` once after cloning.
 # Tools without a system binary are installed on-demand via `npx --yes`.
-# System binaries: gofmt (from Go), golangci-lint, yamllint, gitleaks
-# (>= v8.19 for the `git --staged` subcommand). actionlint is optional: the
-# hook skips when it is not installed.
+# System binaries: gofmt (from Go), golangci-lint, yamllint, actionlint,
+# gitleaks (>= v8.19 for the `git --staged` subcommand). All of them are
+# required: a missing linter blocks the commit instead of skipping, so the
+# hooks cannot be bypassed by uninstalling the tool.
 #
 # Stack: Go GitHub Action. Adapted from arillso/ansible.system, with
 # ansible-lint swapped for gofmt + golangci-lint. No prettier: yamllint and
@@ -29,11 +30,13 @@ pre-commit:
             run: npx --yes -- markdownlint-cli2 {staged_files}
         actionlint:
             glob: ".github/workflows/*.{yml,yaml}"
-            # actionlint is often absent locally; skip instead of failing the
-            # commit with exit 127. A present-but-failing actionlint still blocks.
+            # The guard only turns the bare exit 127 into a readable message;
+            # it must not skip, or deleting the binary would bypass the hook.
             run: >-
                 command -v actionlint >/dev/null 2>&1 || { echo 'actionlint not
-                found, skipping'; exit 0; } && actionlint {staged_files}
+                found: install it (brew install actionlint) or see
+                https://github.com/rhysd/actionlint'; exit 1; } && actionlint
+                {staged_files}
         gitleaks:
             run: gitleaks git --staged --redact --no-banner
 
