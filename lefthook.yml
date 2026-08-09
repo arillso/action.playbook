@@ -43,4 +43,5 @@ pre-push:
         gitleaks-full:
             run: gitleaks git --redact --no-banner
         go-test:
+            glob: "*.go"
             run: go test -race ./...
