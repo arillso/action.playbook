@@ -328,6 +328,7 @@ them as action inputs via `with:` or as environment variables via `env:`.
 > **✨ New in v1.2.0+**
 >
 > SSH private keys are automatically normalized:
+>
 > - Windows line endings (CRLF) → Unix format (LF)
 > - Missing trailing newlines are added
 > - Format validation (RSA, OpenSSH, EC, DSA)
