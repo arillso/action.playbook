@@ -1,7 +1,7 @@
 # -------------------------
 # Stage 1: Build Stage
 # -------------------------
-FROM --platform=$BUILDPLATFORM golang:1.26-alpine@sha256:0178a641fbb4858c5f1b48e34bdaabe0350a330a1b1149aabd498d0699ff5fb2 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine@sha256:3889b425f035be855a72fb4755265311293b6d414521f0a519d819df32222d83 AS builder
 # Use the official Golang Alpine image and assign this build stage the name "builder".
 # The builder runs natively on the build platform and cross-compiles for the target.
 
