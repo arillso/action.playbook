@@ -20,7 +20,7 @@ permissions:
 
 jobs:
     ci:
-        uses: arillso/.github/.github/workflows/ci-go.yml@2026-08-07
+        uses: arillso/.github/.github/workflows/ci-go.yml@2026-08-15
 
     security-secrets:
-        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-08-07
+        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-08-15
