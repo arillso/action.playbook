@@ -25,7 +25,7 @@ concurrency:
 jobs:
     codeql:
         needs: prepare
-        uses: arillso/.github/.github/workflows/security-code.yml@2026-08-15
+        uses: arillso/.github/.github/workflows/security-code.yml@2026-08-16
         with:
             languages: '["go"]'
             go-version: ${{ needs.prepare.outputs.go_version }}
