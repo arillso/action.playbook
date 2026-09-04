@@ -28,21 +28,21 @@ env:
 
 jobs:
     ci:
-        uses: arillso/.github/.github/workflows/ci-go.yml@2026-08-17
+        uses: arillso/.github/.github/workflows/ci-go.yml@2026-08-31
 
     lint:
-        uses: arillso/.github/.github/workflows/ci-lint.yml@2026-08-17
+        uses: arillso/.github/.github/workflows/ci-lint.yml@2026-08-31
         with:
             enable_shellcheck: true
 
     security-secrets:
-        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-08-17
+        uses: arillso/.github/.github/workflows/security-secrets.yml@2026-08-31
 
     security-deps:
-        uses: arillso/.github/.github/workflows/security-deps.yml@2026-08-17
+        uses: arillso/.github/.github/workflows/security-deps.yml@2026-08-31
 
     claude-review:
-        uses: arillso/.github/.github/workflows/ai-claude-review.yml@2026-08-17
+        uses: arillso/.github/.github/workflows/ai-claude-review.yml@2026-08-31
         secrets:
             CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
@@ -107,7 +107,7 @@ jobs:
                   key: ${{ needs.setup-environment.outputs.cache-key }}-binary
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+              uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4
 
             - name: Build Docker image
               uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
