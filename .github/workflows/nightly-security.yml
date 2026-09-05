@@ -25,7 +25,7 @@ concurrency:
 jobs:
     codeql:
         needs: prepare
-        uses: arillso/.github/.github/workflows/security-code.yml@2026-08-17
+        uses: arillso/.github/.github/workflows/security-code.yml@2026-08-31
         with:
             languages: '["go"]'
             go-version: ${{ needs.prepare.outputs.go_version }}
@@ -63,7 +63,7 @@ jobs:
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+              uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4
 
             - name: Build test image
               uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
@@ -84,7 +84,7 @@ jobs:
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+              uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4
 
             - name: Build test image for security scan
               uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
@@ -105,7 +105,7 @@ jobs:
               continue-on-error: true
 
             - name: Upload Trivy scan results
-              uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4
+              uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
               if: always() && hashFiles('trivy-results.sarif') != ''
               with:
                   sarif_file: trivy-results.sarif
