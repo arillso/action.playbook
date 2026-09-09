@@ -141,7 +141,7 @@ jobs:
 
     security-sbom:
         needs: [prepare, build-and-push-image]
-        uses: arillso/.github/.github/workflows/security-sbom.yml@2026-09-06
+        uses: arillso/.github/.github/workflows/security-sbom.yml@2026-09-07
         with:
             artifact-type: container
             artifact-ref: ghcr.io/${{ github.repository }}:${{ needs.prepare.outputs.version }}
