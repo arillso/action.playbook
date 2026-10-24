@@ -1,6 +1,6 @@
 module github.com/arillso/action.playbook
 
-go 1.27.1
+go 1.27.3
 
 require (
 	github.com/arillso/go.ansible/v2 v2.0.0
