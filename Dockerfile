@@ -33,7 +33,7 @@ RUN go build -ldflags="-s -w" -o main .
 # -------------------------
 # Stage 2: Production Stage (Alpine Linux)
 # -------------------------
-FROM arillso/ansible:2.21.2@sha256:66c049b43dbc4b149db5e157462d70b426b63ce59ecbf42658fea07f64524de0
+FROM arillso/ansible:2.21.5@sha256:26c0b76061ff77955fa3b1cb49acdc388fdedb474659a99ea15ab64a4ccb1a74
 # Use an Ansible-based Alpine Linux image as the base for the production stage.
 
 # Switch to root user to execute system-level modifications.
