@@ -259,7 +259,7 @@ outputs:
 
 runs:
     using: "docker"
-    image: "docker://ghcr.io/arillso/action.playbook:0.5.0"
+    image: "docker://ghcr.io/arillso/action.playbook:0.5.0@sha256:894c1d5740ba46d90d14fd9efa7c896bebcc4baaf4c96e34f8165d7a1812faf5"
 branding:
     icon: "play-circle"
     color: "black"
