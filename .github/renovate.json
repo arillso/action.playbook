@@ -10,7 +10,7 @@
             "groupName": "Alpine packages"
         },
         {
-            "description": "Go toolchain: go directive and golang builder image in one PR, so the build never sees a directive newer than the image",
+            "description": "Go toolchain: go directive and golang builder image in one PR. If the image digest lags the directive, the PR stays red only until Renovate adds the digest to the same branch, instead of a separate directive PR that never gets rebased",
             "matchManagers": ["gomod", "dockerfile"],
             "matchDepNames": ["go", "golang"],
             "groupName": "golang",
