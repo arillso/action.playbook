@@ -33,7 +33,7 @@ RUN go build -ldflags="-s -w" -o main .
 # -------------------------
 # Stage 2: Production Stage (Alpine Linux)
 # -------------------------
-FROM arillso/ansible:2.22.0@sha256:27d07ae44f97a272c6b563e3f7bd91890bc50c86ac739b8aa7c430938597a1ed
+FROM arillso/ansible:2.22.0@sha256:213a3827f9376a781ff596991a6b28138709e019f8622d747d1e8573fc148e96
 # Use an Ansible-based Alpine Linux image as the base for the production stage.
 
 # Switch to root user to execute system-level modifications.
@@ -42,7 +42,7 @@ USER root
 # Update package repositories and install the 'shadow' package for access to usermod and groupmod commands.
 RUN apk update && \
 	apk add --no-cache \
-	shadow=4.18.0-r1
+	"shadow>=4.20.4-r0"
 
 # Modify the UID and GID of the 'ansible' user from 1000 to 1001 and update file ownership:
 # - Change the UID of user 'ansible' to 1001.
